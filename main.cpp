@@ -74,11 +74,51 @@ double PearsonCoefficient(double *X, double *Y, int n) {
     return corr;
 }
 
+void PCA_transform(double **data_to_transform, int data_dim, double **new_space) {
+    real_2d_array dset, basis;
+    real_1d_array variances;
+    variances.setlength(2);
+    dset.setlength(N_COLS, data_dim);
+    basis.setlength(data_dim, 2);
+    for (int i = 0; i < N_COLS; ++i) {
+        for(int j = 0; j < data_dim; j++) {
+            dset[i][j] = data_to_transform[j][i];
+        }
+    }
+
+    pcatruncatedsubspace(dset, N_COLS, data_dim, 2, 0.0, 0, variances, basis);
+
+    cout << "-------------PCA--------------------\n";
+    for (int i = 0; i < data_dim; ++i) {
+        for(int j = 0; j < 2; j++) {
+            cout << basis[i][j] << " ";
+        }
+        cout << "\n";
+    }
+
+    for (int i=0;i<N_COLS;i++) {
+        for (int j=0;j<2;j++) {
+            new_space[j][i]=0;
+            for (int k=0;k<data_dim;k++) {
+                new_space[j][i] += dset[i][k] * basis[k][j];
+            }
+        }
+    }
+
+    cout << "-------------NEW SUBSPACE--------------------\n";
+    for(int j = 0; j < 2; j++) {
+        for (int i = 0; i < N_COLS; ++i) {
+            cout << new_space[j][i] << " ";
+        }
+        cout << "\n";
+    }
+}
+
 int main() {
-    double **data, *data_storage;
     cout << fixed;
     cout << setprecision(5);
 
+    double **data, *data_storage;
     data_storage = (double *) malloc(N_ROWS * N_COLS * sizeof(double));
     data = (double **) malloc(N_ROWS * sizeof(double *));
     for (int i = 0; i < N_ROWS; ++i) {
@@ -98,10 +138,11 @@ int main() {
     }
 
     //Standardization
-    struct stats info = getStats(data_storage, N_ROWS * N_COLS);
-
-    for (int i = 0; i < N_ROWS * N_COLS; ++i) {
-        data_storage[i] = (data_storage[i] - info.mean)/info.stdev;
+    for (int i = 0; i < N_ROWS; ++i) {
+        struct stats info = getStats(data[i], N_COLS);
+        for(int j = 0; j < N_COLS; j++) {
+            data[i][j] = (data[i][j] - info.mean)/info.stdev;
+        }
     }
 
 /*
@@ -152,7 +193,7 @@ int main() {
             uncorr_vars++;
         }
     }
-    double **corr, *corr_storage, **uncorr, *uncorr_storage;
+    double **corr, **uncorr;
     corr = (double **) malloc(corr_vars * sizeof(double *));
     uncorr = (double **) malloc(uncorr_vars * sizeof(double *));
 
@@ -191,50 +232,14 @@ int main() {
     }
     //-------------------------------------------------------------------END TEST
 
-    real_2d_array dset, basis;
-    real_1d_array variances;
-    variances.setlength(2);
-    dset.setlength(N_COLS, corr_vars);
-    basis.setlength(corr_vars, 2);
-    for (int i = 0; i < N_COLS; ++i) {
-        for(int j = 0; j < corr_vars; j++) {
-            dset[i][j] = corr[j][i];
-        }
-    }
-
-    pcatruncatedsubspace(dset, N_COLS, corr_vars, 2, 0.0, 0, variances, basis);
-
-    cout << "-------------PCA--------------------\n";
-    for (int i = 0; i < corr_vars; ++i) {
-        for(int j = 0; j < 2; j++) {
-            cout << basis[i][j] << " ";
-        }
-        cout << "\n";
-    }
-
-    double **nspace, *nspace_storage;
-    nspace_storage = (double *) malloc(N_COLS * 2 * sizeof(double));
-    nspace = (double **) malloc(2 * sizeof(double *));
+    double **newspace, *newspace_storage;
+    newspace_storage = (double *) malloc(N_COLS * 2 * sizeof(double));
+    newspace = (double **) malloc(2 * sizeof(double *));
     for (int i = 0; i < 2; ++i) {
-        nspace[i] = &nspace_storage[i*2];
+        newspace[i] = &newspace_storage[i*2];
     }
 
-    for (int i=0;i<N_COLS;i++) {
-        for (int j=0;j<2;j++) {
-            nspace[j][i]=0;
-            for (int k=0;k<corr_vars;k++) {
-                nspace[j][i] += dset[i][k] * basis[k][j];
-            }
-        }
-    }
-
-    cout << "-------------NEW SUBSPACE--------------------\n";
-    for(int j = 0; j < 2; j++) {
-        for (int i = 0; i < N_COLS; ++i) {
-            cout << nspace[j][i] << " ";
-        }
-        cout << "\n";
-    }
+    PCA_transform(corr, corr_vars, newspace);
 
     double *storage, **csi, ***cs;
 
@@ -253,56 +258,26 @@ int main() {
         cs[i] = &csi[i*3];
     }
 
-/*
     for (int i = 0; i < uncorr_vars; ++i) {
-        real_2d_array dset, basis;
-        real_1d_array variances;
-        variances.setlength(2);
-        dset.setlength(N_COLS, 3);
-        basis.setlength(3, 2);
-        for (int j = 0; j < N_COLS; ++j) {
-            for(int k = 0; k < 3; k++) {
-                if ( k <= 1 ) {
-                    dset[j][k] = nspace[k][j];
-                } else {
-                    dset[j][k] = uncorr[i][j];
-                }
-            }
-        }
-
-        pcatruncatedsubspace(dset, N_COLS, 3, 2, 0.0, 0, variances, basis);
-
-        cout << "-------------SECOND PCA--------------------\n";
+        double **combine, *combine_storage;
+        combine_storage = (double *) malloc(N_COLS * 3 * sizeof(double));
+        combine = (double **) malloc(3 * sizeof(double *));
         for (int i = 0; i < 3; ++i) {
-            for(int j = 0; j < 2; j++) {
-                cout << basis[i][j] << " ";
-            }
-            cout << "\n";
+            combine[i] = &combine_storage[i * 3];
         }
 
-        double **nspace, *nspace_storage;
-        nspace_storage = (double *) malloc(N_COLS * 2 * sizeof(double));
-        nspace = (double **) malloc(2 * sizeof(double *));
-        for (int i = 0; i < 2; ++i) {
-            nspace[i] = &nspace_storage[i*2];
-        }
-
-        for (int i=0;i<N_COLS;i++) {
-            for (int j=0;j<2;j++) {
-                nspace[j][i]=0;
-                for (int k=0;k<corr_vars;k++) {
-                    nspace[j][i] += dset[i][k] * basis[k][j];
+        for (int j = 0; j < 3; ++j) {
+            for (int k = 0; k < N_COLS; k++) {
+                if (j <= 1) {
+                    combine[j][k] = newspace[j][k];
+                } else {
+                    combine[j][k] = uncorr[i][j];
                 }
             }
         }
 
-        cout << "-------------NEW SUBSPACE--------------------\n";
-        for (int i = 0; i < N_COLS; ++i) {
-            for(int j = 0; j < 2; j++) {
-                cout << nspace[j][i] << " ";
-            }
-            cout << "\n";
-        }
-    }*/
+        PCA_transform(combine, 3, newspace);
+    }
+
     return 0;
 }

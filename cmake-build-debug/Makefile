@@ -231,114 +231,6 @@ alglib/dataanalysis.cpp.s:
 	$(MAKE) -f CMakeFiles/AdaptiveClustering.dir/build.make CMakeFiles/AdaptiveClustering.dir/alglib/dataanalysis.cpp.s
 .PHONY : alglib/dataanalysis.cpp.s
 
-alglib/diffequations.o: alglib/diffequations.cpp.o
-
-.PHONY : alglib/diffequations.o
-
-# target to build an object file
-alglib/diffequations.cpp.o:
-	$(MAKE) -f CMakeFiles/AdaptiveClustering.dir/build.make CMakeFiles/AdaptiveClustering.dir/alglib/diffequations.cpp.o
-.PHONY : alglib/diffequations.cpp.o
-
-alglib/diffequations.i: alglib/diffequations.cpp.i
-
-.PHONY : alglib/diffequations.i
-
-# target to preprocess a source file
-alglib/diffequations.cpp.i:
-	$(MAKE) -f CMakeFiles/AdaptiveClustering.dir/build.make CMakeFiles/AdaptiveClustering.dir/alglib/diffequations.cpp.i
-.PHONY : alglib/diffequations.cpp.i
-
-alglib/diffequations.s: alglib/diffequations.cpp.s
-
-.PHONY : alglib/diffequations.s
-
-# target to generate assembly for a file
-alglib/diffequations.cpp.s:
-	$(MAKE) -f CMakeFiles/AdaptiveClustering.dir/build.make CMakeFiles/AdaptiveClustering.dir/alglib/diffequations.cpp.s
-.PHONY : alglib/diffequations.cpp.s
-
-alglib/fasttransforms.o: alglib/fasttransforms.cpp.o
-
-.PHONY : alglib/fasttransforms.o
-
-# target to build an object file
-alglib/fasttransforms.cpp.o:
-	$(MAKE) -f CMakeFiles/AdaptiveClustering.dir/build.make CMakeFiles/AdaptiveClustering.dir/alglib/fasttransforms.cpp.o
-.PHONY : alglib/fasttransforms.cpp.o
-
-alglib/fasttransforms.i: alglib/fasttransforms.cpp.i
-
-.PHONY : alglib/fasttransforms.i
-
-# target to preprocess a source file
-alglib/fasttransforms.cpp.i:
-	$(MAKE) -f CMakeFiles/AdaptiveClustering.dir/build.make CMakeFiles/AdaptiveClustering.dir/alglib/fasttransforms.cpp.i
-.PHONY : alglib/fasttransforms.cpp.i
-
-alglib/fasttransforms.s: alglib/fasttransforms.cpp.s
-
-.PHONY : alglib/fasttransforms.s
-
-# target to generate assembly for a file
-alglib/fasttransforms.cpp.s:
-	$(MAKE) -f CMakeFiles/AdaptiveClustering.dir/build.make CMakeFiles/AdaptiveClustering.dir/alglib/fasttransforms.cpp.s
-.PHONY : alglib/fasttransforms.cpp.s
-
-alglib/integration.o: alglib/integration.cpp.o
-
-.PHONY : alglib/integration.o
-
-# target to build an object file
-alglib/integration.cpp.o:
-	$(MAKE) -f CMakeFiles/AdaptiveClustering.dir/build.make CMakeFiles/AdaptiveClustering.dir/alglib/integration.cpp.o
-.PHONY : alglib/integration.cpp.o
-
-alglib/integration.i: alglib/integration.cpp.i
-
-.PHONY : alglib/integration.i
-
-# target to preprocess a source file
-alglib/integration.cpp.i:
-	$(MAKE) -f CMakeFiles/AdaptiveClustering.dir/build.make CMakeFiles/AdaptiveClustering.dir/alglib/integration.cpp.i
-.PHONY : alglib/integration.cpp.i
-
-alglib/integration.s: alglib/integration.cpp.s
-
-.PHONY : alglib/integration.s
-
-# target to generate assembly for a file
-alglib/integration.cpp.s:
-	$(MAKE) -f CMakeFiles/AdaptiveClustering.dir/build.make CMakeFiles/AdaptiveClustering.dir/alglib/integration.cpp.s
-.PHONY : alglib/integration.cpp.s
-
-alglib/interpolation.o: alglib/interpolation.cpp.o
-
-.PHONY : alglib/interpolation.o
-
-# target to build an object file
-alglib/interpolation.cpp.o:
-	$(MAKE) -f CMakeFiles/AdaptiveClustering.dir/build.make CMakeFiles/AdaptiveClustering.dir/alglib/interpolation.cpp.o
-.PHONY : alglib/interpolation.cpp.o
-
-alglib/interpolation.i: alglib/interpolation.cpp.i
-
-.PHONY : alglib/interpolation.i
-
-# target to preprocess a source file
-alglib/interpolation.cpp.i:
-	$(MAKE) -f CMakeFiles/AdaptiveClustering.dir/build.make CMakeFiles/AdaptiveClustering.dir/alglib/interpolation.cpp.i
-.PHONY : alglib/interpolation.cpp.i
-
-alglib/interpolation.s: alglib/interpolation.cpp.s
-
-.PHONY : alglib/interpolation.s
-
-# target to generate assembly for a file
-alglib/interpolation.cpp.s:
-	$(MAKE) -f CMakeFiles/AdaptiveClustering.dir/build.make CMakeFiles/AdaptiveClustering.dir/alglib/interpolation.cpp.s
-.PHONY : alglib/interpolation.cpp.s
-
 alglib/linalg.o: alglib/linalg.cpp.o
 
 .PHONY : alglib/linalg.o
@@ -522,18 +414,6 @@ help:
 	@echo "... alglib/dataanalysis.o"
 	@echo "... alglib/dataanalysis.i"
 	@echo "... alglib/dataanalysis.s"
-	@echo "... alglib/diffequations.o"
-	@echo "... alglib/diffequations.i"
-	@echo "... alglib/diffequations.s"
-	@echo "... alglib/fasttransforms.o"
-	@echo "... alglib/fasttransforms.i"
-	@echo "... alglib/fasttransforms.s"
-	@echo "... alglib/integration.o"
-	@echo "... alglib/integration.i"
-	@echo "... alglib/integration.s"
-	@echo "... alglib/interpolation.o"
-	@echo "... alglib/interpolation.i"
-	@echo "... alglib/interpolation.s"
 	@echo "... alglib/linalg.o"
 	@echo "... alglib/linalg.i"
 	@echo "... alglib/linalg.s"
