@@ -141,6 +141,8 @@ cstring
 -
 cmath
 -
+iomanip
+-
 alglib/dataanalysis.h
 /home/andrea/Scrivania/AdaptiveClustering/alglib/dataanalysis.h
 

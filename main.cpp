@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstring>
 #include <cmath>
+#include <iomanip>
 #include "alglib/dataanalysis.h"
 
 using namespace std;
@@ -8,11 +9,6 @@ using namespace alglib;
 
 #define N_ROWS 4 //NUMBER OF DIMENSIONS
 #define N_COLS 150 //NUMBER OF OBSERVATIONS
-
-struct minmaxinfo {
-    double min;
-    double max;
-};
 
 struct stats {
     double mean;
@@ -42,35 +38,6 @@ void loadData(string fname, double **array) {
         column++;
     }
     fclose(fp);
-}
-
-struct minmaxinfo getMinMax(double *arr, int n) {
-    struct minmaxinfo minmax;
-    int i;
-
-    /*If there is only one element then return it as min and max both*/
-    if (n == 1) {
-        minmax.max = arr[0];
-        minmax.min = arr[0];
-        return minmax;
-    }
-
-    /* If there are more than one elements, then initialize min and max*/
-    if (arr[0] > arr[1]) {
-        minmax.max = arr[0];
-        minmax.min = arr[1];
-    } else {
-        minmax.max = arr[1];
-        minmax.min = arr[0];
-    }
-
-    for (i = 2; i<n; i++) {
-        if (arr[i] >  minmax.max)
-            minmax.max = arr[i];
-        else if (arr[i] <  minmax.min)
-            minmax.min = arr[i];
-    }
-    return minmax;
 }
 
 struct stats getStats(double *arr, int n) {
@@ -109,6 +76,8 @@ double PearsonCoefficient(double *X, double *Y, int n) {
 
 int main() {
     double **data, *data_storage;
+    cout << fixed;
+    cout << setprecision(5);
 
     data_storage = (double *) malloc(N_ROWS * N_COLS * sizeof(double));
     data = (double **) malloc(N_ROWS * sizeof(double *));
@@ -189,8 +158,6 @@ int main() {
 
     corr_vars = 0, uncorr_vars = 0;
 
-    loadData(filename, data);
-
     for (int i = 0; i < N_ROWS; ++i) {
         double overall = 0.0;
         for (int j = 0; j < N_ROWS; ++j) {
@@ -222,17 +189,120 @@ int main() {
         }
         cout << "\n";
     }
+    //-------------------------------------------------------------------END TEST
 
-    real_2d_array x, eigvecs;
-    x.setlength(corr_vars, N_COLS);
-    for (int i = 0; i < corr_vars; ++i) {
-        for(int j = 0; j < N_COLS; j++) {
-            x[i][j] = corr[i][j];
+    real_2d_array dset, basis;
+    real_1d_array variances;
+    variances.setlength(2);
+    dset.setlength(N_COLS, corr_vars);
+    basis.setlength(corr_vars, 2);
+    for (int i = 0; i < N_COLS; ++i) {
+        for(int j = 0; j < corr_vars; j++) {
+            dset[i][j] = corr[j][i];
         }
     }
 
-    real_1d_array eigvals;
+    pcatruncatedsubspace(dset, N_COLS, corr_vars, 2, 0.0, 0, variances, basis);
 
+    cout << "-------------PCA--------------------\n";
+    for (int i = 0; i < corr_vars; ++i) {
+        for(int j = 0; j < 2; j++) {
+            cout << basis[i][j] << " ";
+        }
+        cout << "\n";
+    }
 
+    double **nspace, *nspace_storage;
+    nspace_storage = (double *) malloc(N_COLS * 2 * sizeof(double));
+    nspace = (double **) malloc(2 * sizeof(double *));
+    for (int i = 0; i < 2; ++i) {
+        nspace[i] = &nspace_storage[i*2];
+    }
+
+    for (int i=0;i<N_COLS;i++) {
+        for (int j=0;j<2;j++) {
+            nspace[j][i]=0;
+            for (int k=0;k<corr_vars;k++) {
+                nspace[j][i] += dset[i][k] * basis[k][j];
+            }
+        }
+    }
+
+    cout << "-------------NEW SUBSPACE--------------------\n";
+    for(int j = 0; j < 2; j++) {
+        for (int i = 0; i < N_COLS; ++i) {
+            cout << nspace[j][i] << " ";
+        }
+        cout << "\n";
+    }
+
+    double *storage, **csi, ***cs;
+
+    storage = (double *) malloc(N_COLS * 3 * uncorr_vars * sizeof(double));
+    csi = (double **) malloc(3 * uncorr_vars * sizeof(double *));
+    cs = (double ***) malloc(uncorr_vars * sizeof(double **));
+
+    for (int i = 0; i < 3; ++i) {
+        csi[i] = &storage[i*N_COLS*3];
+    }
+    for (int i = 0; i < uncorr_vars; ++i) {
+        cs[i] = &csi[i*3];
+    }
+
+    for (int i = 0; i < uncorr_vars; ++i) {
+        cs[i] = &csi[i*3];
+    }
+
+/*
+    for (int i = 0; i < uncorr_vars; ++i) {
+        real_2d_array dset, basis;
+        real_1d_array variances;
+        variances.setlength(2);
+        dset.setlength(N_COLS, 3);
+        basis.setlength(3, 2);
+        for (int j = 0; j < N_COLS; ++j) {
+            for(int k = 0; k < 3; k++) {
+                if ( k <= 1 ) {
+                    dset[j][k] = nspace[k][j];
+                } else {
+                    dset[j][k] = uncorr[i][j];
+                }
+            }
+        }
+
+        pcatruncatedsubspace(dset, N_COLS, 3, 2, 0.0, 0, variances, basis);
+
+        cout << "-------------SECOND PCA--------------------\n";
+        for (int i = 0; i < 3; ++i) {
+            for(int j = 0; j < 2; j++) {
+                cout << basis[i][j] << " ";
+            }
+            cout << "\n";
+        }
+
+        double **nspace, *nspace_storage;
+        nspace_storage = (double *) malloc(N_COLS * 2 * sizeof(double));
+        nspace = (double **) malloc(2 * sizeof(double *));
+        for (int i = 0; i < 2; ++i) {
+            nspace[i] = &nspace_storage[i*2];
+        }
+
+        for (int i=0;i<N_COLS;i++) {
+            for (int j=0;j<2;j++) {
+                nspace[j][i]=0;
+                for (int k=0;k<corr_vars;k++) {
+                    nspace[j][i] += dset[i][k] * basis[k][j];
+                }
+            }
+        }
+
+        cout << "-------------NEW SUBSPACE--------------------\n";
+        for (int i = 0; i < N_COLS; ++i) {
+            for(int j = 0; j < 2; j++) {
+                cout << nspace[j][i] << " ";
+            }
+            cout << "\n";
+        }
+    }*/
     return 0;
 }

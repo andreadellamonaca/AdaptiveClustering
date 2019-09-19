@@ -108,6 +108,30 @@
 		<Unit filename="/home/andrea/Scrivania/AdaptiveClustering/alglib/dataanalysis.h">
 			<Option target="AdaptiveClustering"/>
 		</Unit>
+		<Unit filename="/home/andrea/Scrivania/AdaptiveClustering/alglib/diffequations.cpp">
+			<Option target="AdaptiveClustering"/>
+		</Unit>
+		<Unit filename="/home/andrea/Scrivania/AdaptiveClustering/alglib/diffequations.h">
+			<Option target="AdaptiveClustering"/>
+		</Unit>
+		<Unit filename="/home/andrea/Scrivania/AdaptiveClustering/alglib/fasttransforms.cpp">
+			<Option target="AdaptiveClustering"/>
+		</Unit>
+		<Unit filename="/home/andrea/Scrivania/AdaptiveClustering/alglib/fasttransforms.h">
+			<Option target="AdaptiveClustering"/>
+		</Unit>
+		<Unit filename="/home/andrea/Scrivania/AdaptiveClustering/alglib/integration.cpp">
+			<Option target="AdaptiveClustering"/>
+		</Unit>
+		<Unit filename="/home/andrea/Scrivania/AdaptiveClustering/alglib/integration.h">
+			<Option target="AdaptiveClustering"/>
+		</Unit>
+		<Unit filename="/home/andrea/Scrivania/AdaptiveClustering/alglib/interpolation.cpp">
+			<Option target="AdaptiveClustering"/>
+		</Unit>
+		<Unit filename="/home/andrea/Scrivania/AdaptiveClustering/alglib/interpolation.h">
+			<Option target="AdaptiveClustering"/>
+		</Unit>
 		<Unit filename="/home/andrea/Scrivania/AdaptiveClustering/alglib/linalg.cpp">
 			<Option target="AdaptiveClustering"/>
 		</Unit>
