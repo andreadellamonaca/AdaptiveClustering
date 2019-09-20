@@ -67,6 +67,14 @@ CMakeFiles/AdaptiveClustering.dir/alglib/statistics.cpp.o: ../alglib/statistics.
 CMakeFiles/AdaptiveClustering.dir/alglib/statistics.cpp.o: ../alglib/statistics.h
 CMakeFiles/AdaptiveClustering.dir/alglib/statistics.cpp.o: ../alglib/stdafx.h
 
+CMakeFiles/AdaptiveClustering.dir/kmeans/kmeans.cpp.o: ../kmeans/kmeans.cpp
+CMakeFiles/AdaptiveClustering.dir/kmeans/kmeans.cpp.o: ../kmeans/kmeans.h
+CMakeFiles/AdaptiveClustering.dir/kmeans/kmeans.cpp.o: ../kmeans/simple_svg.hpp
+
+CMakeFiles/AdaptiveClustering.dir/kmeans/kmeansPlusPlus.cpp.o: ../kmeans/kmeans.h
+CMakeFiles/AdaptiveClustering.dir/kmeans/kmeansPlusPlus.cpp.o: ../kmeans/kmeansPlusPlus.cpp
+CMakeFiles/AdaptiveClustering.dir/kmeans/kmeansPlusPlus.cpp.o: ../kmeans/kmeansPlusPlus.h
+
 CMakeFiles/AdaptiveClustering.dir/main.cpp.o: ../alglib/alglibinternal.h
 CMakeFiles/AdaptiveClustering.dir/main.cpp.o: ../alglib/alglibmisc.h
 CMakeFiles/AdaptiveClustering.dir/main.cpp.o: ../alglib/ap.h

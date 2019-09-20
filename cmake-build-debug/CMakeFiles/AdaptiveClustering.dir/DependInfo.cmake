@@ -13,6 +13,8 @@ set(CMAKE_DEPENDS_CHECK_CXX
   "/home/andrea/Scrivania/AdaptiveClustering/alglib/solvers.cpp" "/home/andrea/Scrivania/AdaptiveClustering/cmake-build-debug/CMakeFiles/AdaptiveClustering.dir/alglib/solvers.cpp.o"
   "/home/andrea/Scrivania/AdaptiveClustering/alglib/specialfunctions.cpp" "/home/andrea/Scrivania/AdaptiveClustering/cmake-build-debug/CMakeFiles/AdaptiveClustering.dir/alglib/specialfunctions.cpp.o"
   "/home/andrea/Scrivania/AdaptiveClustering/alglib/statistics.cpp" "/home/andrea/Scrivania/AdaptiveClustering/cmake-build-debug/CMakeFiles/AdaptiveClustering.dir/alglib/statistics.cpp.o"
+  "/home/andrea/Scrivania/AdaptiveClustering/kmeans/kmeans.cpp" "/home/andrea/Scrivania/AdaptiveClustering/cmake-build-debug/CMakeFiles/AdaptiveClustering.dir/kmeans/kmeans.cpp.o"
+  "/home/andrea/Scrivania/AdaptiveClustering/kmeans/kmeansPlusPlus.cpp" "/home/andrea/Scrivania/AdaptiveClustering/cmake-build-debug/CMakeFiles/AdaptiveClustering.dir/kmeans/kmeansPlusPlus.cpp.o"
   "/home/andrea/Scrivania/AdaptiveClustering/main.cpp" "/home/andrea/Scrivania/AdaptiveClustering/cmake-build-debug/CMakeFiles/AdaptiveClustering.dir/main.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")

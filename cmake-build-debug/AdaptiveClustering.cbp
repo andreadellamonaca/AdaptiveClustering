@@ -138,6 +138,21 @@
 		<Unit filename="/home/andrea/Scrivania/AdaptiveClustering/alglib/statistics.h">
 			<Option target="AdaptiveClustering"/>
 		</Unit>
+		<Unit filename="/home/andrea/Scrivania/AdaptiveClustering/kmeans/kmeans.cpp">
+			<Option target="AdaptiveClustering"/>
+		</Unit>
+		<Unit filename="/home/andrea/Scrivania/AdaptiveClustering/kmeans/kmeans.h">
+			<Option target="AdaptiveClustering"/>
+		</Unit>
+		<Unit filename="/home/andrea/Scrivania/AdaptiveClustering/kmeans/kmeansPlusPlus.cpp">
+			<Option target="AdaptiveClustering"/>
+		</Unit>
+		<Unit filename="/home/andrea/Scrivania/AdaptiveClustering/kmeans/kmeansPlusPlus.h">
+			<Option target="AdaptiveClustering"/>
+		</Unit>
+		<Unit filename="/home/andrea/Scrivania/AdaptiveClustering/kmeans/simple_svg.hpp">
+			<Option target="AdaptiveClustering"/>
+		</Unit>
 		<Unit filename="/home/andrea/Scrivania/AdaptiveClustering/main.cpp">
 			<Option target="AdaptiveClustering"/>
 		</Unit>

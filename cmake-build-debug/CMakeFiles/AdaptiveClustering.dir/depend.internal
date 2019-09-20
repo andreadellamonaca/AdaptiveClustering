@@ -67,6 +67,14 @@ CMakeFiles/AdaptiveClustering.dir/alglib/statistics.cpp.o
  /home/andrea/Scrivania/AdaptiveClustering/alglib/statistics.cpp
  /home/andrea/Scrivania/AdaptiveClustering/alglib/statistics.h
  /home/andrea/Scrivania/AdaptiveClustering/alglib/stdafx.h
+CMakeFiles/AdaptiveClustering.dir/kmeans/kmeans.cpp.o
+ /home/andrea/Scrivania/AdaptiveClustering/kmeans/kmeans.cpp
+ /home/andrea/Scrivania/AdaptiveClustering/kmeans/kmeans.h
+ /home/andrea/Scrivania/AdaptiveClustering/kmeans/simple_svg.hpp
+CMakeFiles/AdaptiveClustering.dir/kmeans/kmeansPlusPlus.cpp.o
+ /home/andrea/Scrivania/AdaptiveClustering/kmeans/kmeans.h
+ /home/andrea/Scrivania/AdaptiveClustering/kmeans/kmeansPlusPlus.cpp
+ /home/andrea/Scrivania/AdaptiveClustering/kmeans/kmeansPlusPlus.h
 CMakeFiles/AdaptiveClustering.dir/main.cpp.o
  /home/andrea/Scrivania/AdaptiveClustering/alglib/alglibinternal.h
  /home/andrea/Scrivania/AdaptiveClustering/alglib/alglibmisc.h

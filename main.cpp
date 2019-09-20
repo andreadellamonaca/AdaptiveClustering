@@ -118,6 +118,7 @@ int main() {
     cout << fixed;
     cout << setprecision(5);
 
+    //Define the structure to load the dataset
     double **data, *data_storage;
     data_storage = (double *) malloc(N_ROWS * N_COLS * sizeof(double));
     data = (double **) malloc(N_ROWS * sizeof(double *));
@@ -125,11 +126,11 @@ int main() {
         data[i] = &data_storage[i*N_COLS];
     }
 
-    // Fill the matrix from csv
+    // Fill the structure from csv
     string filename = "../Iris.csv";
     loadData(filename, data);
 
-//  PRINT MATRIX
+    cout << "-------------DATASET LOADED--------------------\n";
     for (int i = 0; i < N_ROWS; ++i) {
         for(int j = 0; j < N_COLS; j++) {
             cout << data[i][j] << " ";
@@ -145,6 +146,14 @@ int main() {
         }
     }
 
+    cout << "-------------STD DATASET--------------------\n";
+    for (int i = 0; i < N_ROWS; ++i) {
+        for(int j = 0; j < N_COLS; j++) {
+            cout << data[i][j] << " ";
+        }
+        cout << "\n";
+    }
+
 /*
     // Normalization - MaxMinScaler
     struct pair minmax = getMinMax(data_storage, N_ROWS * N_COLS);
@@ -154,6 +163,7 @@ int main() {
     }
 */
 
+    //Define the structure to load the Correlation Matrix
     double **pearson, *pearson_storage;
     pearson_storage = (double *) malloc(N_ROWS * N_ROWS * sizeof(double));
     pearson = (double **) malloc(N_ROWS * sizeof(double *));
@@ -169,8 +179,8 @@ int main() {
             pearson[j][i] = value;
         }
     }
-    // PRINT PEARSON TABLE
-    printf("----------------PEARSON-----------------\n");
+
+    printf("----------------PEARSON MATRIX-----------------\n");
     for (int i = 0; i < N_ROWS; ++i) {
         for(int j = 0; j < N_ROWS; j++) {
             cout << pearson[i][j] << " ";
@@ -179,6 +189,8 @@ int main() {
     }
 
     //-------------------------------------------------------------------TEST
+
+    //Divide dimensions in CORR and UNCORR
     int corr_vars = 0, uncorr_vars = 0;
     for (int i = 0; i < N_ROWS; ++i) {
         double overall = 0.0;
@@ -193,12 +205,12 @@ int main() {
             uncorr_vars++;
         }
     }
+
     double **corr, **uncorr;
     corr = (double **) malloc(corr_vars * sizeof(double *));
     uncorr = (double **) malloc(uncorr_vars * sizeof(double *));
 
     corr_vars = 0, uncorr_vars = 0;
-
     for (int i = 0; i < N_ROWS; ++i) {
         double overall = 0.0;
         for (int j = 0; j < N_ROWS; ++j) {
@@ -215,7 +227,7 @@ int main() {
         }
     }
 
-    printf("----------------CORR-----------------\n");
+    printf("----------------CORR DIMS-----------------\n");
     for (int i = 0; i < corr_vars; ++i) {
         for(int j = 0; j < N_COLS; j++) {
             cout << corr[i][j] << " ";
@@ -223,7 +235,7 @@ int main() {
         cout << "\n";
     }
 
-    printf("----------------UNCORR-----------------\n");
+    printf("----------------UNCORR DIMS-----------------\n");
     for (int i = 0; i < uncorr_vars; ++i) {
         for(int j = 0; j < N_COLS; j++) {
             cout << uncorr[i][j] << " ";
@@ -232,6 +244,7 @@ int main() {
     }
     //-------------------------------------------------------------------END TEST
 
+    //Define the structure to save PC1_corr and PC2_corr ------ matrix [2 * N_COLS]
     double **newspace, *newspace_storage;
     newspace_storage = (double *) malloc(N_COLS * 2 * sizeof(double));
     newspace = (double **) malloc(2 * sizeof(double *));
@@ -241,24 +254,22 @@ int main() {
 
     PCA_transform(corr, corr_vars, newspace);
 
+    //Define the structure to save the candidate subspaces ------ #UNCORR * matrix [3 * N_COLS]
     double *storage, **csi, ***cs;
-
     storage = (double *) malloc(N_COLS * 3 * uncorr_vars * sizeof(double));
     csi = (double **) malloc(3 * uncorr_vars * sizeof(double *));
     cs = (double ***) malloc(uncorr_vars * sizeof(double **));
 
-    for (int i = 0; i < 3; ++i) {
-        csi[i] = &storage[i*N_COLS*3];
+    for (int i = 0; i < 3 * uncorr_vars; ++i) {
+        csi[i] = &storage[i*N_COLS];
     }
     for (int i = 0; i < uncorr_vars; ++i) {
-        cs[i] = &csi[i*3];
-    }
-
-    for (int i = 0; i < uncorr_vars; ++i) {
-        cs[i] = &csi[i*3];
+        cs[i] = &csi[i * 3];
     }
 
     for (int i = 0; i < uncorr_vars; ++i) {
+
+        //Define the structure to save the candidate subspace CS_i ------ matrix [3 * N_COLS]
         double **combine, *combine_storage;
         combine_storage = (double *) malloc(N_COLS * 3 * sizeof(double));
         combine = (double **) malloc(3 * sizeof(double *));
@@ -266,6 +277,7 @@ int main() {
             combine[i] = &combine_storage[i * 3];
         }
 
+        //Concatenate PC1_corr, PC2_corr and i-th dimension of uncorr
         for (int j = 0; j < 3; ++j) {
             for (int k = 0; k < N_COLS; k++) {
                 if (j <= 1) {
@@ -276,7 +288,9 @@ int main() {
             }
         }
 
-        PCA_transform(combine, 3, newspace);
+        PCA_transform(combine, 3, cs[i]);
+
+
     }
 
     return 0;
