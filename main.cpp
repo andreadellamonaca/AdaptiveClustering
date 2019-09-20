@@ -3,12 +3,14 @@
 #include <cmath>
 #include <iomanip>
 #include "alglib/dataanalysis.h"
+#include "alglib/stdafx.h"
 
 using namespace std;
 using namespace alglib;
 
-#define N_ROWS 4 //NUMBER OF DIMENSIONS
-#define N_COLS 150 //NUMBER OF OBSERVATIONS
+#define N_ROWS 4 //Number of dimensions
+#define N_COLS 150 //Number of observations
+#define K_MAX 10 //Max number of clusters for Elbow criterion
 
 struct stats {
     double mean;
@@ -111,6 +113,24 @@ void PCA_transform(double **data_to_transform, int data_dim, double **new_space)
             cout << new_space[j][i] << " ";
         }
         cout << "\n";
+    }
+}
+
+void Elbow_K_means(double **data_to_transform, kmeansreport rep) {
+    clusterizerstate status;
+    real_2d_array data;
+
+    data.setlength(N_COLS, 2);
+    for (int i = 0; i < N_COLS; ++i) {
+        for(int j = 0; j < 2; j++) {
+            data[i][j] = data_to_transform[j][i];
+        }
+    }
+
+    for (int j = 1; j <= K_MAX; ++j) {
+        clusterizercreate(status);
+        clusterizersetpoints(status, data, 2);
+        clusterizerrunkmeans(status, j, rep);
     }
 }
 
@@ -254,27 +274,26 @@ int main() {
 
     PCA_transform(corr, corr_vars, newspace);
 
-    //Define the structure to save the candidate subspaces ------ #UNCORR * matrix [3 * N_COLS]
+    //Define the structure to save the candidate subspaces ------ #UNCORR * matrix [2 * N_COLS]
     double *storage, **csi, ***cs;
-    storage = (double *) malloc(N_COLS * 3 * uncorr_vars * sizeof(double));
-    csi = (double **) malloc(3 * uncorr_vars * sizeof(double *));
+    storage = (double *) malloc(N_COLS * 2 * uncorr_vars * sizeof(double));
+    csi = (double **) malloc(2 * uncorr_vars * sizeof(double *));
     cs = (double ***) malloc(uncorr_vars * sizeof(double **));
 
-    for (int i = 0; i < 3 * uncorr_vars; ++i) {
+    for (int i = 0; i < 2 * uncorr_vars; ++i) {
         csi[i] = &storage[i*N_COLS];
     }
     for (int i = 0; i < uncorr_vars; ++i) {
-        cs[i] = &csi[i * 3];
+        cs[i] = &csi[i * 2];
     }
 
     for (int i = 0; i < uncorr_vars; ++i) {
-
         //Define the structure to save the candidate subspace CS_i ------ matrix [3 * N_COLS]
         double **combine, *combine_storage;
         combine_storage = (double *) malloc(N_COLS * 3 * sizeof(double));
         combine = (double **) malloc(3 * sizeof(double *));
-        for (int i = 0; i < 3; ++i) {
-            combine[i] = &combine_storage[i * 3];
+        for (int l = 0; l < 3; ++l) {
+            combine[l] = &combine_storage[l * 3];
         }
 
         //Concatenate PC1_corr, PC2_corr and i-th dimension of uncorr
@@ -287,10 +306,12 @@ int main() {
                 }
             }
         }
-
         PCA_transform(combine, 3, cs[i]);
+    }
 
-
+    for (int i = 0; i < uncorr_vars; ++i) {
+        kmeansreport rep;
+        Elbow_K_means(cs[i], rep);
     }
 
     return 0;

@@ -366,60 +366,6 @@ alglib/statistics.cpp.s:
 	$(MAKE) -f CMakeFiles/AdaptiveClustering.dir/build.make CMakeFiles/AdaptiveClustering.dir/alglib/statistics.cpp.s
 .PHONY : alglib/statistics.cpp.s
 
-kmeans/kmeans.o: kmeans/kmeans.cpp.o
-
-.PHONY : kmeans/kmeans.o
-
-# target to build an object file
-kmeans/kmeans.cpp.o:
-	$(MAKE) -f CMakeFiles/AdaptiveClustering.dir/build.make CMakeFiles/AdaptiveClustering.dir/kmeans/kmeans.cpp.o
-.PHONY : kmeans/kmeans.cpp.o
-
-kmeans/kmeans.i: kmeans/kmeans.cpp.i
-
-.PHONY : kmeans/kmeans.i
-
-# target to preprocess a source file
-kmeans/kmeans.cpp.i:
-	$(MAKE) -f CMakeFiles/AdaptiveClustering.dir/build.make CMakeFiles/AdaptiveClustering.dir/kmeans/kmeans.cpp.i
-.PHONY : kmeans/kmeans.cpp.i
-
-kmeans/kmeans.s: kmeans/kmeans.cpp.s
-
-.PHONY : kmeans/kmeans.s
-
-# target to generate assembly for a file
-kmeans/kmeans.cpp.s:
-	$(MAKE) -f CMakeFiles/AdaptiveClustering.dir/build.make CMakeFiles/AdaptiveClustering.dir/kmeans/kmeans.cpp.s
-.PHONY : kmeans/kmeans.cpp.s
-
-kmeans/kmeansPlusPlus.o: kmeans/kmeansPlusPlus.cpp.o
-
-.PHONY : kmeans/kmeansPlusPlus.o
-
-# target to build an object file
-kmeans/kmeansPlusPlus.cpp.o:
-	$(MAKE) -f CMakeFiles/AdaptiveClustering.dir/build.make CMakeFiles/AdaptiveClustering.dir/kmeans/kmeansPlusPlus.cpp.o
-.PHONY : kmeans/kmeansPlusPlus.cpp.o
-
-kmeans/kmeansPlusPlus.i: kmeans/kmeansPlusPlus.cpp.i
-
-.PHONY : kmeans/kmeansPlusPlus.i
-
-# target to preprocess a source file
-kmeans/kmeansPlusPlus.cpp.i:
-	$(MAKE) -f CMakeFiles/AdaptiveClustering.dir/build.make CMakeFiles/AdaptiveClustering.dir/kmeans/kmeansPlusPlus.cpp.i
-.PHONY : kmeans/kmeansPlusPlus.cpp.i
-
-kmeans/kmeansPlusPlus.s: kmeans/kmeansPlusPlus.cpp.s
-
-.PHONY : kmeans/kmeansPlusPlus.s
-
-# target to generate assembly for a file
-kmeans/kmeansPlusPlus.cpp.s:
-	$(MAKE) -f CMakeFiles/AdaptiveClustering.dir/build.make CMakeFiles/AdaptiveClustering.dir/kmeans/kmeansPlusPlus.cpp.s
-.PHONY : kmeans/kmeansPlusPlus.cpp.s
-
 main.o: main.cpp.o
 
 .PHONY : main.o
@@ -483,12 +429,6 @@ help:
 	@echo "... alglib/statistics.o"
 	@echo "... alglib/statistics.i"
 	@echo "... alglib/statistics.s"
-	@echo "... kmeans/kmeans.o"
-	@echo "... kmeans/kmeans.i"
-	@echo "... kmeans/kmeans.s"
-	@echo "... kmeans/kmeansPlusPlus.o"
-	@echo "... kmeans/kmeansPlusPlus.i"
-	@echo "... kmeans/kmeansPlusPlus.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"

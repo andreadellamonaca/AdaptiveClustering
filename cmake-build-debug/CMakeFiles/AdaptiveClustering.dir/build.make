@@ -187,32 +187,6 @@ CMakeFiles/AdaptiveClustering.dir/alglib/statistics.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/AdaptiveClustering.dir/alglib/statistics.cpp.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/andrea/Scrivania/AdaptiveClustering/alglib/statistics.cpp -o CMakeFiles/AdaptiveClustering.dir/alglib/statistics.cpp.s
 
-CMakeFiles/AdaptiveClustering.dir/kmeans/kmeans.cpp.o: CMakeFiles/AdaptiveClustering.dir/flags.make
-CMakeFiles/AdaptiveClustering.dir/kmeans/kmeans.cpp.o: ../kmeans/kmeans.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/andrea/Scrivania/AdaptiveClustering/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Building CXX object CMakeFiles/AdaptiveClustering.dir/kmeans/kmeans.cpp.o"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/AdaptiveClustering.dir/kmeans/kmeans.cpp.o -c /home/andrea/Scrivania/AdaptiveClustering/kmeans/kmeans.cpp
-
-CMakeFiles/AdaptiveClustering.dir/kmeans/kmeans.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/AdaptiveClustering.dir/kmeans/kmeans.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/andrea/Scrivania/AdaptiveClustering/kmeans/kmeans.cpp > CMakeFiles/AdaptiveClustering.dir/kmeans/kmeans.cpp.i
-
-CMakeFiles/AdaptiveClustering.dir/kmeans/kmeans.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/AdaptiveClustering.dir/kmeans/kmeans.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/andrea/Scrivania/AdaptiveClustering/kmeans/kmeans.cpp -o CMakeFiles/AdaptiveClustering.dir/kmeans/kmeans.cpp.s
-
-CMakeFiles/AdaptiveClustering.dir/kmeans/kmeansPlusPlus.cpp.o: CMakeFiles/AdaptiveClustering.dir/flags.make
-CMakeFiles/AdaptiveClustering.dir/kmeans/kmeansPlusPlus.cpp.o: ../kmeans/kmeansPlusPlus.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/andrea/Scrivania/AdaptiveClustering/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Building CXX object CMakeFiles/AdaptiveClustering.dir/kmeans/kmeansPlusPlus.cpp.o"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/AdaptiveClustering.dir/kmeans/kmeansPlusPlus.cpp.o -c /home/andrea/Scrivania/AdaptiveClustering/kmeans/kmeansPlusPlus.cpp
-
-CMakeFiles/AdaptiveClustering.dir/kmeans/kmeansPlusPlus.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/AdaptiveClustering.dir/kmeans/kmeansPlusPlus.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/andrea/Scrivania/AdaptiveClustering/kmeans/kmeansPlusPlus.cpp > CMakeFiles/AdaptiveClustering.dir/kmeans/kmeansPlusPlus.cpp.i
-
-CMakeFiles/AdaptiveClustering.dir/kmeans/kmeansPlusPlus.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/AdaptiveClustering.dir/kmeans/kmeansPlusPlus.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/andrea/Scrivania/AdaptiveClustering/kmeans/kmeansPlusPlus.cpp -o CMakeFiles/AdaptiveClustering.dir/kmeans/kmeansPlusPlus.cpp.s
-
 # Object files for target AdaptiveClustering
 AdaptiveClustering_OBJECTS = \
 "CMakeFiles/AdaptiveClustering.dir/main.cpp.o" \
@@ -224,9 +198,7 @@ AdaptiveClustering_OBJECTS = \
 "CMakeFiles/AdaptiveClustering.dir/alglib/optimization.cpp.o" \
 "CMakeFiles/AdaptiveClustering.dir/alglib/solvers.cpp.o" \
 "CMakeFiles/AdaptiveClustering.dir/alglib/specialfunctions.cpp.o" \
-"CMakeFiles/AdaptiveClustering.dir/alglib/statistics.cpp.o" \
-"CMakeFiles/AdaptiveClustering.dir/kmeans/kmeans.cpp.o" \
-"CMakeFiles/AdaptiveClustering.dir/kmeans/kmeansPlusPlus.cpp.o"
+"CMakeFiles/AdaptiveClustering.dir/alglib/statistics.cpp.o"
 
 # External object files for target AdaptiveClustering
 AdaptiveClustering_EXTERNAL_OBJECTS =
@@ -241,11 +213,9 @@ AdaptiveClustering: CMakeFiles/AdaptiveClustering.dir/alglib/optimization.cpp.o
 AdaptiveClustering: CMakeFiles/AdaptiveClustering.dir/alglib/solvers.cpp.o
 AdaptiveClustering: CMakeFiles/AdaptiveClustering.dir/alglib/specialfunctions.cpp.o
 AdaptiveClustering: CMakeFiles/AdaptiveClustering.dir/alglib/statistics.cpp.o
-AdaptiveClustering: CMakeFiles/AdaptiveClustering.dir/kmeans/kmeans.cpp.o
-AdaptiveClustering: CMakeFiles/AdaptiveClustering.dir/kmeans/kmeansPlusPlus.cpp.o
 AdaptiveClustering: CMakeFiles/AdaptiveClustering.dir/build.make
 AdaptiveClustering: CMakeFiles/AdaptiveClustering.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/andrea/Scrivania/AdaptiveClustering/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Linking CXX executable AdaptiveClustering"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/andrea/Scrivania/AdaptiveClustering/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Linking CXX executable AdaptiveClustering"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/AdaptiveClustering.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
