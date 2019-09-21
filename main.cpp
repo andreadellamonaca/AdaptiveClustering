@@ -11,6 +11,7 @@ using namespace alglib;
 #define N_ROWS 4 //Number of dimensions
 #define N_COLS 150 //Number of observations
 #define K_MAX 10 //Max number of clusters for Elbow criterion
+#define DATA_THRES 5 //Max number of outlier found
 
 struct stats {
     double mean;
@@ -116,21 +117,34 @@ void PCA_transform(double **data_to_transform, int data_dim, double **new_space)
     }
 }
 
-void Elbow_K_means(double **data_to_transform, kmeansreport rep) {
+kmeansreport Elbow_K_means(double **data_to_transform) {
     clusterizerstate status;
     real_2d_array data;
+    kmeansreport final;
 
     data.setlength(N_COLS, 2);
     for (int i = 0; i < N_COLS; ++i) {
-        for(int j = 0; j < 2; j++) {
+        for (int j = 0; j < 2; j++) {
             data[i][j] = data_to_transform[j][i];
         }
     }
 
+    kmeansreport previous;
     for (int j = 1; j <= K_MAX; ++j) {
         clusterizercreate(status);
         clusterizersetpoints(status, data, 2);
-        clusterizerrunkmeans(status, j, rep);
+        clusterizerrunkmeans(status, j, final);
+        if (j == 1) {
+            previous = final;
+        } else {
+            if (previous.energy*100 - final.energy*100 <= 0.001) {
+                final = previous;
+                cout << "The optimal K is: " << final.k << "\n";
+                return final;
+            } else {
+                previous = final;
+            }
+        }
     }
 }
 
@@ -311,7 +325,21 @@ int main() {
 
     for (int i = 0; i < uncorr_vars; ++i) {
         kmeansreport rep;
-        Elbow_K_means(cs[i], rep);
+        rep = Elbow_K_means(cs[i]);
+        for (int j = 0; j < rep.k; ++j) {
+            int k = 0;
+            while ( k < DATA_THRES) {
+                double dist = 0.0;
+                for (int l = 0; l < N_COLS; ++l) {
+                    for (int m = 0; m < 2; ++m) {
+                        if (rep.cidx[l] == j) {
+                            dist += cs[i][m][l];
+                        }
+                    }
+                }
+            }
+            cout << rep.cidx[j] << " ";
+        }
     }
 
     return 0;
