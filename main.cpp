@@ -11,7 +11,7 @@ using namespace alglib;
 #define N_ROWS 4 //Number of dimensions
 #define N_COLS 150 //Number of observations
 #define K_MAX 10 //Max number of clusters for Elbow criterion
-#define DATA_THRES 5 //Max number of outlier found
+#define DATA_THRES 30 //Max number of points within the circle
 
 struct stats {
     double mean;
@@ -146,6 +146,18 @@ kmeansreport Elbow_K_means(double **data_to_transform) {
             }
         }
     }
+}
+
+double L2distance(double xc, double yc, double x1, double y1)
+{
+    double x = xc - x1; //calculating number to square in next step
+    double y = yc - y1;
+    double dist;
+
+    dist = pow(x, 2) + pow(y, 2);       //calculating Euclidean distance
+    dist = sqrt(dist);
+
+    return dist;
 }
 
 int main() {
@@ -323,6 +335,21 @@ int main() {
         PCA_transform(combine, 3, cs[i]);
     }
 
+    //binary matrix uncorr_var*NCOLS to save information about data within the circles
+    int **outliersinfo, *outliersinfo_storage;
+    outliersinfo_storage = (int *) malloc(uncorr_vars * N_COLS * sizeof(int));
+    outliersinfo = (int **) malloc(uncorr_vars * sizeof(int *));
+    for (int i = 0; i < uncorr_vars; ++i) {
+        outliersinfo[i] = &outliersinfo_storage[i*N_COLS];
+    }
+
+    for (int i = 0; i < uncorr_vars; ++i) {
+        for(int j = 0; j < N_COLS; j++) {
+            outliersinfo[i][j] = 0;
+        }
+        cout << "\n";
+    }
+
     for (int i = 0; i < uncorr_vars; ++i) {
         kmeansreport rep;
         rep = Elbow_K_means(cs[i]);
@@ -330,15 +357,39 @@ int main() {
             int k = 0;
             while ( k < DATA_THRES) {
                 double dist = 0.0;
+                int n_points = 0;
                 for (int l = 0; l < N_COLS; ++l) {
-                    for (int m = 0; m < 2; ++m) {
-                        if (rep.cidx[l] == j) {
-                            dist += cs[i][m][l];
+                    if (rep.cidx[l] == j && !(outliersinfo[i][l])) {
+                        dist += L2distance(rep.c[j][0], rep.c[j][1], cs[i][0][l], cs[i][1][l]);
+                        n_points++;
+                    }
+                }
+                double dist_mean = dist/n_points;
+                for (int l = 0; l < N_COLS; ++l) {
+                    if (rep.cidx[l] == j && !(outliersinfo[i][l])) {
+                        if (L2distance(rep.c[j][0], rep.c[j][1], cs[i][0][l], cs[i][1][l]) <= dist_mean) {
+                            k++;
+                        } else {
+                            outliersinfo[i][l] = 1;
                         }
                     }
                 }
             }
-            cout << rep.cidx[j] << " ";
+        }
+    }
+
+    cout << "Outliers Identification Process: \n";
+
+    for (int i = 0; i < N_COLS; ++i) {
+        int occurence = 0;
+        for (int j = 0; j < uncorr_vars; ++j) {
+            occurence += outliersinfo[j][i];
+        }
+        if (occurence > 0) {
+            for (int l = 0; l < N_ROWS; ++l) {
+                cout << data[l][i] << " ";
+            }
+            cout << "(" << occurence << ")\n";
         }
     }
 
