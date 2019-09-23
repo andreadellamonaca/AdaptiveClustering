@@ -10,10 +10,11 @@ using namespace std;
 using namespace alglib;
 
 #define K_MAX 10 //Max number of clusters for Elbow criterion
-#define DATA_THRES 2 //Max number of points within the circle
+#define DATA_THRES 25 //Max number of points within the circle
 
 int N_ROWS; //Number of dimensions
 int N_COLS; //Number of observations
+string filename = "../Iris.csv";
 
 struct stats {
     double mean;
@@ -164,7 +165,7 @@ kmeansreport Elbow_K_means(double **data_to_transform) {
         if (j == 1) {
             previous = final;
         } else {
-            if (previous.energy*100 - final.energy*100 <= 0.001) {
+            if (previous.energy - final.energy <= 0.01) {
                 final = previous;
                 cout << "The optimal K is: " << final.k << "\n";
                 return final;
@@ -173,6 +174,7 @@ kmeansreport Elbow_K_means(double **data_to_transform) {
             }
         }
     }
+    cout << "The optimal K is: " << final.k << "\n";
     return final;
 }
 
@@ -193,7 +195,6 @@ int main() {
     cout << setprecision(5);
 
     //Define the structure to load the dataset
-    string filename = "../Iris.csv";
     getDatasetDims(filename);
     double **data, *data_storage;
     data_storage = (double *) malloc(N_ROWS * N_COLS * sizeof(double));
@@ -365,43 +366,48 @@ int main() {
         PCA_transform(combine, 3, cs[i]);
     }
 
-    //binary matrix uncorr_var*NCOLS to save information about data within the circles
-    int **outliersinfo, *outliersinfo_storage;
-    outliersinfo_storage = (int *) malloc(uncorr_vars * N_COLS * sizeof(int));
-    outliersinfo = (int **) malloc(uncorr_vars * sizeof(int *));
+    //binary matrix [uncorr_var*NCOLS]: 1 says data within the circles, otherwise 0
+    int **incircle, *incircle_storage;
+    incircle_storage = (int *) malloc(uncorr_vars * N_COLS * sizeof(int));
+    incircle = (int **) malloc(uncorr_vars * sizeof(int *));
     for (int i = 0; i < uncorr_vars; ++i) {
-        outliersinfo[i] = &outliersinfo_storage[i*N_COLS];
+        incircle[i] = &incircle_storage[i * N_COLS];
     }
 
     for (int i = 0; i < uncorr_vars; ++i) {
         for(int j = 0; j < N_COLS; j++) {
-            outliersinfo[i][j] = 0;
+            incircle[i][j] = 0;
         }
     }
 
     for (int i = 0; i < uncorr_vars; ++i) {
         kmeansreport rep;
-        rep = Elbow_K_means(cs[i]);
+        rep = Elbow_K_means(cs[i]); //Clustering through Elbow criterion on i-th candidate subspace
         for (int j = 0; j < rep.k; ++j) {
-            int k = 0;
+            int k = 0, previous_k = 0;
             while ( k < DATA_THRES) {
                 double dist = 0.0;
                 int n_points = 0;
                 for (int l = 0; l < N_COLS; ++l) {
-                    if (rep.cidx[l] == j && !(outliersinfo[i][l])) {
+                    if (rep.cidx[l] == j && !(incircle[i][l])) {
                         dist += L2distance(rep.c[j][0], rep.c[j][1], cs[i][0][l], cs[i][1][l]);
                         n_points++;
                     }
                 }
                 double dist_mean = dist/n_points;
                 for (int l = 0; l < N_COLS; ++l) {
-                    if (rep.cidx[l] == j && !(outliersinfo[i][l])) {
+                    if (rep.cidx[l] == j && !(incircle[i][l])) {
                         if (L2distance(rep.c[j][0], rep.c[j][1], cs[i][0][l], cs[i][1][l]) <= dist_mean) {
+                            incircle[i][l] = 1;
                             k++;
-                        } else {
-                            outliersinfo[i][l] = 1;
                         }
                     }
+                }
+                //Stopping criterion when the data threshold is greater than n_points in a cluster
+                if (k == previous_k) {
+                    break;
+                } else {
+                    previous_k = k;
                 }
             }
         }
@@ -409,12 +415,15 @@ int main() {
 
     cout << "Outliers Identification Process: \n";
 
+    int tot_outliers = 0;
     for (int i = 0; i < N_COLS; ++i) {
         int occurrence = 0;
         for (int j = 0; j < uncorr_vars; ++j) {
-            occurrence += outliersinfo[j][i];
+            occurrence += incircle[j][i];
         }
+
         if (occurrence > 0) {
+            tot_outliers++;
             cout << i << ") ";
             for (int l = 0; l < N_ROWS; ++l) {
                 cout << data[l][i] << " ";
@@ -422,6 +431,8 @@ int main() {
             cout << "(" << occurrence << ")\n";
         }
     }
+
+    cout << "TOTAL NUMBER OF OUTLIERS: " << tot_outliers;
 
     return 0;
 }
