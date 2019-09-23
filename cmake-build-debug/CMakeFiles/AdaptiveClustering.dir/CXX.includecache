@@ -145,6 +145,8 @@ cmath
 -
 iomanip
 -
+fstream
+-
 alglib/dataanalysis.h
 /home/andrea/Scrivania/AdaptiveClustering/alglib/dataanalysis.h
 alglib/stdafx.h

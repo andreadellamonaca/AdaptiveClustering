@@ -2,21 +2,48 @@
 #include <cstring>
 #include <cmath>
 #include <iomanip>
+#include <fstream>
 #include "alglib/dataanalysis.h"
 #include "alglib/stdafx.h"
 
 using namespace std;
 using namespace alglib;
 
-#define N_ROWS 4 //Number of dimensions
-#define N_COLS 150 //Number of observations
 #define K_MAX 10 //Max number of clusters for Elbow criterion
-#define DATA_THRES 30 //Max number of points within the circle
+#define DATA_THRES 2 //Max number of points within the circle
+
+int N_ROWS; //Number of dimensions
+int N_COLS; //Number of observations
 
 struct stats {
     double mean;
     double stdev;
 };
+
+void getDatasetDims(string fname) {
+    int cols = 0;
+    int rows = 0;
+    ifstream file(fname);
+    string line;
+    int first = 1;
+
+    while (getline(file, line)) {
+        if (first) {
+            istringstream iss(line);
+            string result;
+            while (getline(iss, result, ','))
+            {
+                cols++;
+            }
+            first = 0;
+        }
+        rows++;
+    }
+    N_ROWS = cols;
+    N_COLS = rows;
+    cout << "Dataset: #DATA = " << rows << " , #DIMENSIONS = " << cols << "\n";
+    file.close();
+}
 
 void loadData(string fname, double **array) {
     char buf[1024];
@@ -146,6 +173,7 @@ kmeansreport Elbow_K_means(double **data_to_transform) {
             }
         }
     }
+    return final;
 }
 
 double L2distance(double xc, double yc, double x1, double y1)
@@ -165,6 +193,8 @@ int main() {
     cout << setprecision(5);
 
     //Define the structure to load the dataset
+    string filename = "../Iris.csv";
+    getDatasetDims(filename);
     double **data, *data_storage;
     data_storage = (double *) malloc(N_ROWS * N_COLS * sizeof(double));
     data = (double **) malloc(N_ROWS * sizeof(double *));
@@ -173,7 +203,6 @@ int main() {
     }
 
     // Fill the structure from csv
-    string filename = "../Iris.csv";
     loadData(filename, data);
 
     cout << "-------------DATASET LOADED--------------------\n";
@@ -200,14 +229,14 @@ int main() {
         cout << "\n";
     }
 
-/*
-    // Normalization - MaxMinScaler
-    struct pair minmax = getMinMax(data_storage, N_ROWS * N_COLS);
 
-    for (int i = 0; i < N_ROWS * N_COLS; ++i) {
-        data_storage[i] = (data_storage[i] - minmax.min)/(minmax.max - minmax.min);
-    }
-*/
+//    // Normalization - MaxMinScaler
+//    struct pair minmax = getMinMax(data_storage, N_ROWS * N_COLS);
+//
+//    for (int i = 0; i < N_ROWS * N_COLS; ++i) {
+//        data_storage[i] = (data_storage[i] - minmax.min)/(minmax.max - minmax.min);
+//    }
+
 
     //Define the structure to load the Correlation Matrix
     double **pearson, *pearson_storage;
@@ -319,7 +348,7 @@ int main() {
         combine_storage = (double *) malloc(N_COLS * 3 * sizeof(double));
         combine = (double **) malloc(3 * sizeof(double *));
         for (int l = 0; l < 3; ++l) {
-            combine[l] = &combine_storage[l * 3];
+            combine[l] = &combine_storage[l * N_COLS];
         }
 
         //Concatenate PC1_corr, PC2_corr and i-th dimension of uncorr
@@ -328,10 +357,11 @@ int main() {
                 if (j <= 1) {
                     combine[j][k] = newspace[j][k];
                 } else {
-                    combine[j][k] = uncorr[i][j];
+                    combine[j][k] = uncorr[i][k];
                 }
             }
         }
+
         PCA_transform(combine, 3, cs[i]);
     }
 
@@ -347,7 +377,6 @@ int main() {
         for(int j = 0; j < N_COLS; j++) {
             outliersinfo[i][j] = 0;
         }
-        cout << "\n";
     }
 
     for (int i = 0; i < uncorr_vars; ++i) {
@@ -381,15 +410,16 @@ int main() {
     cout << "Outliers Identification Process: \n";
 
     for (int i = 0; i < N_COLS; ++i) {
-        int occurence = 0;
+        int occurrence = 0;
         for (int j = 0; j < uncorr_vars; ++j) {
-            occurence += outliersinfo[j][i];
+            occurrence += outliersinfo[j][i];
         }
-        if (occurence > 0) {
+        if (occurrence > 0) {
+            cout << i << ") ";
             for (int l = 0; l < N_ROWS; ++l) {
                 cout << data[l][i] << " ";
             }
-            cout << "(" << occurence << ")\n";
+            cout << "(" << occurrence << ")\n";
         }
     }
 
