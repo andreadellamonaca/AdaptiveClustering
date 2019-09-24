@@ -10,7 +10,7 @@ using namespace std;
 using namespace alglib;
 
 #define K_MAX 10 //Max number of clusters for Elbow criterion
-#define DATA_THRES 21 //Max number of points within the circle
+#define DATA_THRES 50 //Max number of points within the circle
 
 int N_ROWS; //Number of dimensions
 int N_COLS; //Number of observations
@@ -419,14 +419,15 @@ int main() {
     for (int i = 0; i < N_COLS; ++i) {
         int occurrence = 0;
         for (int j = 0; j < uncorr_vars; ++j) {
-            occurrence += incircle[j][i];
+            occurrence += !(incircle[j][i]);
         }
 
         if (occurrence > 0) {
             tot_outliers++;
             cout << i << ") ";
-            for (int l = 0; l < 2; ++l) {
-                cout << cs[0][l][i] << " ";
+            for (int l = 0; l < N_ROWS; ++l) {
+                //cout << cs[0][l][i] << " ";
+                cout << data[l][i] << " ";
             }
             cout << "(" << occurrence << ")\n";
         }
