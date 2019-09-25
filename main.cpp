@@ -10,11 +10,11 @@ using namespace std;
 using namespace alglib;
 
 #define K_MAX 10 //Max number of clusters for Elbow criterion
-#define DATA_THRES 50 //Max number of points within the circle
+#define DATA_THRES 735 //Max number of points within the circle
 
 int N_ROWS; //Number of dimensions
 int N_COLS; //Number of observations
-string filename = "../Iris.csv";
+string filename = "../Absenteeism_at_work.csv";
 
 struct stats {
     double mean;
@@ -162,9 +162,11 @@ kmeansreport Elbow_K_means(double **data_to_transform) {
         clusterizercreate(status);
         clusterizersetpoints(status, data, 2);
         clusterizerrunkmeans(status, j, final);
+
         if (j == 1) {
             previous = final;
         } else {
+            //Sum of Squares within-clusters
             if (previous.energy - final.energy <= 0.01) {
                 final = previous;
                 cout << "The optimal K is: " << final.k << "\n";
@@ -229,15 +231,6 @@ int main() {
         }
         cout << "\n";
     }
-
-
-//    // Normalization - MaxMinScaler
-//    struct pair minmax = getMinMax(data_storage, N_ROWS * N_COLS);
-//
-//    for (int i = 0; i < N_ROWS * N_COLS; ++i) {
-//        data_storage[i] = (data_storage[i] - minmax.min)/(minmax.max - minmax.min);
-//    }
-
 
     //Define the structure to load the Correlation Matrix
     double **pearson, *pearson_storage;
@@ -366,7 +359,7 @@ int main() {
         PCA_transform(combine, 3, cs[i]);
     }
 
-    //binary matrix [uncorr_var*NCOLS]: 1 says data within the circles, otherwise 0
+    //binary matrix [uncorr_var*NCOLS]: 1 says the data is in the circles, otherwise 0
     int **incircle, *incircle_storage;
     incircle_storage = (int *) malloc(uncorr_vars * N_COLS * sizeof(int));
     incircle = (int **) malloc(uncorr_vars * sizeof(int *));
@@ -403,7 +396,7 @@ int main() {
                         }
                     }
                 }
-                //Stopping criterion when the data threshold is greater than n_points in a cluster
+                //Stopping criterion when the data threshold is greater than remaining n_points in a cluster
                 if (k == previous_k) {
                     break;
                 } else {
