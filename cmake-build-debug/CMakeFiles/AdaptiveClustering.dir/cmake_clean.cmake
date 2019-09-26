@@ -1,5 +1,6 @@
 file(REMOVE_RECURSE
-  "CMakeFiles/AdaptiveClustering.dir/main.cpp.o"
+  "AdaptiveClustering"
+  "AdaptiveClustering.pdb"
   "CMakeFiles/AdaptiveClustering.dir/alglib/alglibinternal.cpp.o"
   "CMakeFiles/AdaptiveClustering.dir/alglib/alglibmisc.cpp.o"
   "CMakeFiles/AdaptiveClustering.dir/alglib/ap.cpp.o"
@@ -9,8 +10,7 @@ file(REMOVE_RECURSE
   "CMakeFiles/AdaptiveClustering.dir/alglib/solvers.cpp.o"
   "CMakeFiles/AdaptiveClustering.dir/alglib/specialfunctions.cpp.o"
   "CMakeFiles/AdaptiveClustering.dir/alglib/statistics.cpp.o"
-  "AdaptiveClustering.pdb"
-  "AdaptiveClustering"
+  "CMakeFiles/AdaptiveClustering.dir/main.cpp.o"
 )
 
 # Per-language clean rules from dependency scanning.
