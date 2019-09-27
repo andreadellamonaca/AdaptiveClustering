@@ -11,17 +11,19 @@ using namespace std;
 using namespace alglib;
 
 #define K_MAX 10 //Max number of clusters for Elbow criterion
-#define DATA_THRES 30 //Max number of points within the circle
+#define WCSS_THRES 0.1 //Threshold for Within-Cluster Sum of Squares for Elbow criterion
+#define PERCENTAGE_INCIRCLE 0.95 //Percentage of points within the circle
 
 int N_DIMS; //Number of dimensions
 int N_DATA; //Number of observations
 string filename = "../Iris.csv";
 //string filename = "../Absenteeism_at_work.csv";
 //string filename = "../HTRU_2.csv";
+//string filename = "../uniform.csv";
 
-struct stats {
-    double mean;
-    double stdev;
+struct MaxMin {
+    double min;
+    double max;
 };
 
 void getDatasetDims(string fname) {
@@ -56,45 +58,67 @@ void loadData(string fname, double **array) {
     FILE *fp = fopen(fname.c_str(), "r");
     if (!fp) {
         printf("Can't open file\n");
-        exit(1);
+        exit(-1);
     }
     while (fgets(buf, 1024, fp)) {
         token = strtok(buf, ",");
         for (int i=0; i < N_DIMS; i++) {
-            if (token == NULL) {
+            if (token == nullptr) {
                 break;
             }
             // convert text numeral to double
             double val = atof(token);
             array[i][column] = val;
-            token = strtok(NULL, ",");
+            token = strtok(nullptr, ",");
         }
         column++;
     }
     fclose(fp);
 }
 
-struct stats getStats(double *arr, int n) {
-    struct stats info;
-    double sum = 0.0, st_dev = 0.0;
-    int i;
+double getMean(double *arr) {
+    double sum = 0.0;
 
-    for (i = 0; i<n; i++) {
+    for (int i = 0; i<N_DATA; i++) {
         sum += arr[i];
     }
-    info.mean = sum/n;
-    for (i = 0; i<n; i++) {
-        st_dev += pow(arr[i] - info.mean, 2);
-    }
-    info.stdev = st_dev;
-    return info;
+
+    return sum/N_DATA;
 }
 
-double PearsonCoefficient(double *X, double *Y, int n) {
+struct MaxMin getMinMax(double *arr) {
+    struct MaxMin minmax;
+
+    /*If there is only one element then return it as min and max both*/
+    if (N_DATA * N_DIMS == 1) {
+        minmax.max = arr[0];
+        minmax.min = arr[0];
+        return minmax;
+    }
+
+    /* If there are more than one elements, then initialize min and max*/
+    if (arr[0] > arr[1]) {
+        minmax.max = arr[0];
+        minmax.min = arr[1];
+    } else {
+        minmax.max = arr[1];
+        minmax.min = arr[0];
+    }
+
+    for (int i = 2; i<N_DATA * N_DIMS; i++) {
+        if (arr[i] >  minmax.max)
+            minmax.max = arr[i];
+        else if (arr[i] <  minmax.min)
+            minmax.min = arr[i];
+    }
+    return minmax;
+}
+
+double PearsonCoefficient(double *X, double *Y) {
     double sum_X = 0, sum_Y = 0, sum_XY = 0;
     double squareSum_X = 0, squareSum_Y = 0;
 
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < N_DATA; i++) {
         sum_X += X[i];
         sum_Y += Y[i];
         sum_XY += X[i] * Y[i]; // sum of X[i] * Y[i]
@@ -102,9 +126,9 @@ double PearsonCoefficient(double *X, double *Y, int n) {
         squareSum_Y += Y[i] * Y[i];
     }
 
-    double corr = (double)(n * sum_XY - sum_X * sum_Y)
-                  / sqrt((n * squareSum_X - sum_X * sum_X)
-                         * (n * squareSum_Y - sum_Y * sum_Y));
+    double corr = (double)(N_DATA * sum_XY - sum_X * sum_Y)
+                  / sqrt((N_DATA * squareSum_X - sum_X * sum_X)
+                         * (N_DATA * squareSum_Y - sum_Y * sum_Y));
     return corr;
 }
 
@@ -170,8 +194,7 @@ kmeansreport Elbow_K_means(double **data_to_transform) {
             previous = final;
         } else {
             //Sum of Squares within-clusters
-            if (previous.energy - final.energy <= 0.01) {
-                final = previous;
+            if (previous.energy - final.energy <= WCSS_THRES) {
                 cout << "The optimal K is " << final.k << "\n";
                 return final;
             } else {
@@ -179,7 +202,7 @@ kmeansreport Elbow_K_means(double **data_to_transform) {
             }
         }
     }
-    cout << "The optimal K is: " << final.k << "\n";
+    cout << "The optimal K is " << final.k << "\n";
     return final;
 }
 
@@ -200,10 +223,20 @@ int main() {
     cout << setprecision(5);
 
     //Define the structure to load the dataset
-    getDatasetDims(filename);
     double **data, *data_storage;
+    getDatasetDims(filename);
+
     data_storage = (double *) malloc(N_DIMS * N_DATA * sizeof(double));
+    if (data_storage == nullptr) {
+        cout << "Malloc error on data_storage" << endl;
+        exit(-1);
+    }
     data = (double **) malloc(N_DIMS * sizeof(double *));
+    if (data == nullptr) {
+        cout << "Malloc error on data" << endl;
+        exit(-1);
+    }
+
     for (int i = 0; i < N_DIMS; ++i) {
         data[i] = &data_storage[i * N_DATA];
     }
@@ -223,11 +256,18 @@ int main() {
 
     //Standardization
     for (int i = 0; i < N_DIMS; ++i) {
-        struct stats info = getStats(data[i], N_DATA);
+        double mean = getMean(data[i]);
         for(int j = 0; j < N_DATA; j++) {
-            data[i][j] = (data[i][j] - info.mean)/info.stdev;
+            data[i][j] = (data[i][j] - mean);
         }
     }
+
+    // Normalization - MaxMinScaler
+//    struct MaxMin minmax = getMinMax(data_storage);
+//
+//    for (int i = 0; i < N_DATA * N_DIMS; ++i) {
+//        data_storage[i] = (data_storage[i] - minmax.min)/(minmax.max - minmax.min);
+//    }
 
     cout << "-------------STD DATASET--------------------\n";
     for (int i = 0; i < N_DIMS; ++i) {
@@ -240,7 +280,16 @@ int main() {
     //Define the structure to load the Correlation Matrix
     double **pearson, *pearson_storage;
     pearson_storage = (double *) malloc(N_DIMS * N_DIMS * sizeof(double));
+    if (pearson_storage == nullptr) {
+        cout << "Malloc error on pearson_storage" << endl;
+        exit(-1);
+    }
     pearson = (double **) malloc(N_DIMS * sizeof(double *));
+    if (pearson == nullptr) {
+        cout << "Malloc error on pearson" << endl;
+        exit(-1);
+    }
+
     for (int i = 0; i < N_DIMS; ++i) {
         pearson[i] = &pearson_storage[i * N_DIMS];
     }
@@ -248,7 +297,7 @@ int main() {
     for (int i = 0; i < N_DIMS; ++i) {
         pearson[i][i] = 1;
         for (int j = i+1; j < N_DIMS; ++j) {
-            double value = PearsonCoefficient(data[i], data[j], N_DATA);
+            double value = PearsonCoefficient(data[i], data[j]);
             pearson[i][j] = value;
             pearson[j][i] = value;
         }
@@ -280,9 +329,27 @@ int main() {
         }
     }
 
-    double **corr, **uncorr;
+    if (corr_vars < 2) {
+        cout << "Error: Correlated dimensions must be more than 1 in order to apply PCA!" << endl;
+        exit(-1);
+    }
+    if (uncorr_vars == 0) {
+        cout << "Error: There are no candidate subspaces!" << endl;
+        exit(-1);
+    }
+
+    double **corr;
+    int *uncorr;
     corr = (double **) malloc(corr_vars * sizeof(double *));
-    uncorr = (double **) malloc(uncorr_vars * sizeof(double *));
+    if (corr == nullptr) {
+        cout << "Malloc error on corr" << endl;
+        exit(-1);
+    }
+    uncorr = (int *) (malloc(uncorr_vars * sizeof(int)));
+    if (uncorr == nullptr) {
+        cout << "Malloc error on corr or uncorr" << endl;
+        exit(-1);
+    }
 
     corr_vars = 0, uncorr_vars = 0;
     for (int i = 0; i < N_DIMS; ++i) {
@@ -296,10 +363,14 @@ int main() {
             corr[corr_vars] = data[i];
             corr_vars++;
         } else {
-            uncorr[uncorr_vars] = data[i];
+            uncorr[uncorr_vars] = i;
             uncorr_vars++;
         }
     }
+
+    free(pearson_storage);
+    free(pearson);
+    cout << "Correlated dimensions: " << corr_vars << ", " << "Uncorrelated dimensions: " << uncorr_vars << endl;
 
     printf("----------------CORR DIMS-----------------\n");
     for (int i = 0; i < corr_vars; ++i) {
@@ -311,70 +382,105 @@ int main() {
 
     printf("----------------UNCORR DIMS-----------------\n");
     for (int i = 0; i < uncorr_vars; ++i) {
-        for(int j = 0; j < N_DATA; j++) {
-            cout << uncorr[i][j] << " ";
-        }
-        cout << "\n";
+        cout << uncorr[i] << " ";
     }
+    cout << "\n";
     //-------------------------------------------------------------------END TEST
 
     //Define the structure to save PC1_corr and PC2_corr ------ matrix [2 * N_DATA]
     double **newspace, *newspace_storage;
     newspace_storage = (double *) malloc(N_DATA * 2 * sizeof(double));
     newspace = (double **) malloc(2 * sizeof(double *));
+    if (newspace == nullptr || newspace_storage == nullptr) {
+        cout << "Malloc error on newspace or newspace_storage" << endl;
+        exit(-1);
+    }
     for (int i = 0; i < 2; ++i) {
-        newspace[i] = &newspace_storage[i*2];
+        newspace[i] = &newspace_storage[i*N_DATA];
     }
 
     PCA_transform(corr, corr_vars, newspace);
 
+    free(corr);
+
     //Define the structure to save the candidate subspaces ------ #UNCORR * matrix [2 * N_DATA]
-    double *storage, **csi, ***cs;
-    storage = (double *) malloc(N_DATA * 2 * uncorr_vars * sizeof(double));
+    double *cs_storage, **csi, ***cs;
+    cs_storage = (double *) malloc(N_DATA * 2 * uncorr_vars * sizeof(double));
+    if (cs_storage == nullptr) {
+        cout << "Malloc error on cs_storage" << endl;
+        exit(-1);
+    }
     csi = (double **) malloc(2 * uncorr_vars * sizeof(double *));
+    if (csi == nullptr) {
+        cout << "Malloc error on csi" << endl;
+        exit(-1);
+    }
     cs = (double ***) malloc(uncorr_vars * sizeof(double **));
+    if (cs == nullptr) {
+        cout << "Malloc error on cs" << endl;
+        exit(-1);
+    }
 
     for (int i = 0; i < 2 * uncorr_vars; ++i) {
-        csi[i] = &storage[i * N_DATA];
+        csi[i] = &cs_storage[i * N_DATA];
     }
     for (int i = 0; i < uncorr_vars; ++i) {
         cs[i] = &csi[i * 2];
     }
 
-    for (int i = 0; i < uncorr_vars; ++i) {
-        //Define the structure to save the candidate subspace CS_i ------ matrix [3 * N_DATA]
-        double **combine, *combine_storage;
-        combine_storage = (double *) malloc(N_DATA * 3 * sizeof(double));
-        combine = (double **) malloc(3 * sizeof(double *));
-        for (int l = 0; l < 3; ++l) {
-            combine[l] = &combine_storage[l * N_DATA];
-        }
+    //Define the structure to save the candidate subspace CS_i ------ matrix [3 * N_DATA]
+    double **combine, *combine_storage;
+    combine_storage = (double *) malloc(N_DATA * 3 * sizeof(double));
+    if (combine_storage == nullptr) {
+        cout << "Malloc error on combine_storage" << endl;
+        exit(-1);
+    }
+    combine = (double **) malloc(3 * sizeof(double *));
+    if (combine == nullptr) {
+        cout << "Malloc error on combine" << endl;
+        exit(-1);
+    }
+    for (int l = 0; l < 3; ++l) {
+        combine[l] = &combine_storage[l * N_DATA];
+    }
 
+    //Concatenate PC1_corr, PC2_corr
+    memcpy(combine[0], newspace[0], N_DATA);
+    memcpy(combine[1], newspace[1], N_DATA);
+
+    free(newspace_storage);
+    free(newspace);
+
+    for (int i = 0; i < uncorr_vars; ++i) {
         //Concatenate PC1_corr, PC2_corr and i-th dimension of uncorr
-        for (int j = 0; j < 3; ++j) {
-            for (int k = 0; k < N_DATA; k++) {
-                if (j <= 1) {
-                    combine[j][k] = newspace[j][k];
-                } else {
-                    combine[j][k] = uncorr[i][k];
-                }
-            }
-        }
+        memcpy(combine[2], data[uncorr[i]], N_DATA);
 
         PCA_transform(combine, 3, cs[i]);
     }
 
-    //binary matrix [uncorr_var*NCOLS]: 1 says the data is in the circles, otherwise 0
-    int **incircle, *incircle_storage;
-    incircle_storage = (int *) malloc(uncorr_vars * N_DATA * sizeof(int));
-    incircle = (int **) malloc(uncorr_vars * sizeof(int *));
+    free(combine_storage);
+    free(combine);
+
+    //boolean matrix [uncorr_var*N_DATA]: True says the data is in the circles, otherwise False
+    bool **incircle, *incircle_storage;
+    incircle_storage = (bool *) malloc(uncorr_vars * N_DATA * sizeof(bool));
+    if (incircle_storage == nullptr) {
+        cout << "Malloc error on incircle_storage" << endl;
+        exit(-1);
+    }
+    incircle = (bool **) malloc(uncorr_vars * sizeof(bool *));
+    if (incircle == nullptr) {
+        cout << "Malloc error on incircle" << endl;
+        exit(-1);
+    }
+
     for (int i = 0; i < uncorr_vars; ++i) {
         incircle[i] = &incircle_storage[i * N_DATA];
     }
 
     for (int i = 0; i < uncorr_vars; ++i) {
         for(int j = 0; j < N_DATA; j++) {
-            incircle[i][j] = 0;
+            incircle[i][j] = false;
         }
     }
 
@@ -384,7 +490,7 @@ int main() {
         rep = Elbow_K_means(cs[i]); //Clustering through Elbow criterion on i-th candidate subspace
         for (int j = 0; j < rep.k; ++j) {
             int k = 0, previous_k = 0;
-            while ( k < DATA_THRES) {
+            while (k < PERCENTAGE_INCIRCLE * N_DATA) {
                 double dist = 0.0;
                 int n_points = 0;
                 for (int l = 0; l < N_DATA; ++l) {
@@ -397,7 +503,7 @@ int main() {
                 for (int l = 0; l < N_DATA; ++l) {
                     if (rep.cidx[l] == j && !(incircle[i][l])) {
                         if (L2distance(rep.c[j][0], rep.c[j][1], cs[i][0][l], cs[i][1][l]) <= dist_mean) {
-                            incircle[i][l] = 1;
+                            incircle[i][l] = true;
                             k++;
                         }
                     }
@@ -420,7 +526,9 @@ int main() {
     for (int i = 0; i < N_DATA; ++i) {
         int occurrence = 0;
         for (int j = 0; j < uncorr_vars; ++j) {
-            occurrence += !(incircle[j][i]);
+            if (!incircle[j][i]) {
+                occurrence++;
+            }
         }
 
         if (occurrence > 0) {
@@ -433,6 +541,14 @@ int main() {
             cout << "(" << occurrence << ")\n";
         }
     }
+
+    free(incircle_storage);
+    free(incircle);
+    free(cs_storage);
+    free(csi);
+    free(cs);
+    free(data_storage);
+    free(data);
 
     cout << "TOTAL NUMBER OF OUTLIERS: " << tot_outliers << endl;
 
