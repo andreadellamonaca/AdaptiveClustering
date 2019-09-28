@@ -16,9 +16,9 @@ using namespace alglib;
 
 int N_DIMS; //Number of dimensions
 int N_DATA; //Number of observations
-string filename = "../Iris.csv";
+//string filename = "../Iris.csv";
 //string filename = "../Absenteeism_at_work.csv";
-//string filename = "../HTRU_2.csv";
+string filename = "../HTRU_2.csv";
 //string filename = "../uniform.csv";
 
 struct MaxMin {
@@ -47,7 +47,7 @@ void getDatasetDims(string fname) {
     }
     N_DIMS = cols;
     N_DATA = rows;
-    cout << "Dataset: #DATA = " << rows << " , #DIMENSIONS = " << cols << "\n";
+    cout << "Dataset: #DATA = " << N_DATA << " , #DIMENSIONS = " << N_DIMS << "\n";
     file.close();
 }
 
@@ -194,7 +194,7 @@ kmeansreport Elbow_K_means(double **data_to_transform) {
             previous = final;
         } else {
             //Sum of Squares within-clusters
-            if (previous.energy - final.energy <= WCSS_THRES) {
+            if ((previous.energy - final.energy) <= WCSS_THRES) {
                 cout << "The optimal K is " << final.k << "\n";
                 return final;
             } else {
@@ -216,6 +216,18 @@ double L2distance(double xc, double yc, double x1, double y1)
     dist = sqrt(dist);
 
     return dist;
+}
+
+void create_csv_out(double **data, string name, int rows, int cols) {
+   fstream fout;
+   fout.open("../" + name, ios::out | ios::app);
+
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
+            fout << data[j][i] << ",";
+        }
+        fout << "\n";
+    }
 }
 
 int main() {
@@ -390,9 +402,13 @@ int main() {
     //Define the structure to save PC1_corr and PC2_corr ------ matrix [2 * N_DATA]
     double **newspace, *newspace_storage;
     newspace_storage = (double *) malloc(N_DATA * 2 * sizeof(double));
+    if (newspace_storage == nullptr) {
+        cout << "Malloc error on newspace_storage" << endl;
+        exit(-1);
+    }
     newspace = (double **) malloc(2 * sizeof(double *));
-    if (newspace == nullptr || newspace_storage == nullptr) {
-        cout << "Malloc error on newspace or newspace_storage" << endl;
+    if (newspace == nullptr) {
+        cout << "Malloc error on newspace" << endl;
         exit(-1);
     }
     for (int i = 0; i < 2; ++i) {
@@ -487,6 +503,11 @@ int main() {
     for (int i = 0; i < uncorr_vars; ++i) {
         kmeansreport rep;
         cout << "Candidate Subspace " << i+1 << ": ";
+/*
+        string filename;
+        filename = 'dataout' + (char) i + '.csv';
+        create_csv_out(cs[i], filename, N_DATA, 2);
+*/
         rep = Elbow_K_means(cs[i]); //Clustering through Elbow criterion on i-th candidate subspace
         for (int j = 0; j < rep.k; ++j) {
             int k = 0, previous_k = 0;
