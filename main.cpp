@@ -4,6 +4,7 @@
 #include <iomanip>
 #include <fstream>
 #include <chrono>
+#include <algorithm>
 #include "alglib/dataanalysis.h"
 #include "alglib/stdafx.h"
 
@@ -12,14 +13,13 @@ using namespace alglib;
 
 #define K_MAX 10 //Max number of clusters for Elbow criterion
 #define WCSS_THRES 0.1 //Threshold for Within-Cluster Sum of Squares for Elbow criterion
-#define PERCENTAGE_INCIRCLE 0.95 //Percentage of points within the circle
+#define PERCENTAGE_INCIRCLE 0.20 //Percentage of points within the circle
 
 int N_DIMS; //Number of dimensions
 int N_DATA; //Number of observations
-//string filename = "../Iris.csv";
-//string filename = "../Absenteeism_at_work.csv";
-string filename = "../HTRU_2.csv";
-//string filename = "../uniform.csv";
+string filename = "../Iris.csv";
+//string filename = "../HTRU_2.csv";
+//string filename = "../dataset_benchmark/dim256.csv";
 
 struct MaxMin {
     double min;
@@ -51,29 +51,37 @@ void getDatasetDims(string fname) {
     file.close();
 }
 
+
 void loadData(string fname, double **array) {
-    char buf[1024];
-    char *token;
-    int column = 0;
-    FILE *fp = fopen(fname.c_str(), "r");
-    if (!fp) {
-        printf("Can't open file\n");
-        exit(-1);
-    }
-    while (fgets(buf, 1024, fp)) {
-        token = strtok(buf, ",");
-        for (int i=0; i < N_DIMS; i++) {
-            if (token == nullptr) {
-                break;
+    ifstream inputFile(fname);
+    int row = 0;
+    while (inputFile) {
+        string s;
+        if (!getline(inputFile, s)) break;
+        if (s[0] != '#') {
+            istringstream ss(s);
+            while (ss) {
+                for (int i = 0; i < N_DIMS; i++) {
+                    string line;
+                    if (!getline(ss, line, ','))
+                        break;
+                    try {
+                        array[i][row] = stod(line);
+                    }
+                    catch (const invalid_argument e) {
+                        cout << "NaN found in file " << fname << " line " << row
+                             << endl;
+                        e.what();
+                    }
+                }
             }
-            // convert text numeral to double
-            double val = atof(token);
-            array[i][column] = val;
-            token = strtok(nullptr, ",");
         }
-        column++;
+        row++;
     }
-    fclose(fp);
+    if (!inputFile.eof()) {
+        cerr << "Could not read file " << fname << "\n";
+        __throw_invalid_argument("File not found.");
+    }
 }
 
 double getMean(double *arr) {
@@ -146,13 +154,13 @@ void PCA_transform(double **data_to_transform, int data_dim, double **new_space)
 
     pcatruncatedsubspace(dset, N_DATA, data_dim, 2, 0.0, 0, variances, basis);
 
-    cout << "-------------PCA--------------------\n";
-    for (int i = 0; i < data_dim; ++i) {
-        for(int j = 0; j < 2; j++) {
-            cout << basis[i][j] << " ";
-        }
-        cout << "\n";
-    }
+//    cout << "PCA result: " << endl;
+//    for (int i = 0; i < data_dim; ++i) {
+//        for(int j = 0; j < 2; j++) {
+//            cout << basis[i][j] << " ";
+//        }
+//        cout << "\n";
+//    }
 
     for (int i=0; i < N_DATA; i++) {
         for (int j=0;j<2;j++) {
@@ -163,13 +171,13 @@ void PCA_transform(double **data_to_transform, int data_dim, double **new_space)
         }
     }
 
-    cout << "-------------NEW SUBSPACE--------------------\n";
-    for(int j = 0; j < 2; j++) {
-        for (int i = 0; i < N_DATA; ++i) {
-            cout << new_space[j][i] << " ";
-        }
-        cout << "\n";
-    }
+//    cout << "The resulting subspace: " << endl;
+//    for(int j = 0; j < 2; j++) {
+//        for (int i = 0; i < N_DATA; ++i) {
+//            cout << new_space[j][i] << " ";
+//        }
+//        cout << "\n";
+//    }
 }
 
 kmeansreport Elbow_K_means(double **data_to_transform) {
@@ -256,13 +264,13 @@ int main() {
     // Fill the structure from csv
     loadData(filename, data);
 
-    cout << "-------------DATASET LOADED--------------------\n";
-    for (int i = 0; i < N_DIMS; ++i) {
-        for(int j = 0; j < N_DATA; j++) {
-            cout << data[i][j] << " ";
-        }
-       cout << "\n";
-    }
+    cout << "Dataset Loaded" << endl;
+//    for (int i = 0; i < N_DIMS; ++i) {
+//        for(int j = 0; j < N_DATA; j++) {
+//            cout << data[i][j] << " ";
+//        }
+//       cout << "\n";
+//    }
 
     auto start = chrono::steady_clock::now();
 
@@ -281,13 +289,13 @@ int main() {
 //        data_storage[i] = (data_storage[i] - minmax.min)/(minmax.max - minmax.min);
 //    }
 
-    cout << "-------------STD DATASET--------------------\n";
-    for (int i = 0; i < N_DIMS; ++i) {
-        for(int j = 0; j < N_DATA; j++) {
-            cout << data[i][j] << " ";
-        }
-        cout << "\n";
-    }
+    cout << "Dataset standardized" << endl;
+//    for (int i = 0; i < N_DIMS; ++i) {
+//        for(int j = 0; j < N_DATA; j++) {
+//            cout << data[i][j] << " ";
+//        }
+//        cout << "\n";
+//    }
 
     //Define the structure to load the Correlation Matrix
     double **pearson, *pearson_storage;
@@ -315,17 +323,15 @@ int main() {
         }
     }
 
-    printf("----------------PEARSON MATRIX-----------------\n");
-    for (int i = 0; i < N_DIMS; ++i) {
-        for(int j = 0; j < N_DIMS; j++) {
-            cout << pearson[i][j] << " ";
-        }
-        cout << "\n";
-    }
+    cout << "Pearson Correlation Coefficient computed" << endl;
+//    for (int i = 0; i < N_DIMS; ++i) {
+//        for(int j = 0; j < N_DIMS; j++) {
+//            cout << pearson[i][j] << " ";
+//        }
+//        cout << "\n";
+//    }
 
-    //-------------------------------------------------------------------TEST
-
-    //Divide dimensions in CORR and UNCORR
+    //Dimensions partitioned in CORR and UNCORR, then CORR U UNCORR = DIMS
     int corr_vars = 0, uncorr_vars = 0;
     for (int i = 0; i < N_DIMS; ++i) {
         double overall = 0.0;
@@ -334,7 +340,7 @@ int main() {
                 overall += pearson[i][j];
             }
         }
-        if (overall >= 0) {
+        if ((overall/N_DIMS) >= 0) {
             corr_vars++;
         } else {
             uncorr_vars++;
@@ -371,7 +377,7 @@ int main() {
                 overall += pearson[i][j];
             }
         }
-        if (overall >= 0) {
+        if ((overall/N_DIMS) >= 0) {
             corr[corr_vars] = data[i];
             corr_vars++;
         } else {
@@ -384,20 +390,19 @@ int main() {
     free(pearson);
     cout << "Correlated dimensions: " << corr_vars << ", " << "Uncorrelated dimensions: " << uncorr_vars << endl;
 
-    printf("----------------CORR DIMS-----------------\n");
-    for (int i = 0; i < corr_vars; ++i) {
-        for(int j = 0; j < N_DATA; j++) {
-            cout << corr[i][j] << " ";
-        }
-        cout << "\n";
-    }
-
-    printf("----------------UNCORR DIMS-----------------\n");
-    for (int i = 0; i < uncorr_vars; ++i) {
-        cout << uncorr[i] << " ";
-    }
-    cout << "\n";
-    //-------------------------------------------------------------------END TEST
+//    cout << "CORR subspace" << endl;
+//    for (int i = 0; i < corr_vars; ++i) {
+//        for(int j = 0; j < N_DATA; j++) {
+//            cout << corr[i][j] << " ";
+//        }
+//        cout << "\n";
+//    }
+//
+//    cout << "UNCORR subspace" << endl;
+//    for (int i = 0; i < uncorr_vars; ++i) {
+//        cout << uncorr[i] << " ";
+//    }
+//    cout << "\n";
 
     //Define the structure to save PC1_corr and PC2_corr ------ matrix [2 * N_DATA]
     double **newspace, *newspace_storage;
@@ -418,6 +423,7 @@ int main() {
     PCA_transform(corr, corr_vars, newspace);
 
     free(corr);
+    cout << "PCA computed on CORR subspace" << endl;
 
     //Define the structure to save the candidate subspaces ------ #UNCORR * matrix [2 * N_DATA]
     double *cs_storage, **csi, ***cs;
@@ -472,6 +478,7 @@ int main() {
         memcpy(combine[2], data[uncorr[i]], N_DATA);
 
         PCA_transform(combine, 3, cs[i]);
+        cout << "PCA computed on PC1_CORR, PC2_CORR and " << i+1 << "-th dimension of UNCORR" << endl;
     }
 
     free(combine_storage);
@@ -501,13 +508,11 @@ int main() {
     }
 
     for (int i = 0; i < uncorr_vars; ++i) {
+//        string fileoutname;
+//        fileoutname = std::to_string('dataout' + (char) i + '.csv');
+//        create_csv_out(cs[i], fileoutname, N_DATA, 2);
         kmeansreport rep;
         cout << "Candidate Subspace " << i+1 << ": ";
-/*
-        string filename;
-        filename = 'dataout' + (char) i + '.csv';
-        create_csv_out(cs[i], filename, N_DATA, 2);
-*/
         rep = Elbow_K_means(cs[i]); //Clustering through Elbow criterion on i-th candidate subspace
         for (int j = 0; j < rep.k; ++j) {
             int k = 0, previous_k = 0;
