@@ -337,10 +337,10 @@ int main() {
                 }
             }
         }
-//        string fileoutname = "dataout";
-//        string num = to_string(i);
-//        string concat = fileoutname + num + ".csv";
-//        csv_out_info(cs[i], concat, incircle[i], rep);
+        string fileoutname = "dataout";
+        string num = to_string(i);
+        string concat = fileoutname + num + ".csv";
+        csv_out_info(cs[i], concat, incircle[i], rep);
     }
 
     auto end = chrono::steady_clock::now();
@@ -405,7 +405,7 @@ void getDatasetDims(string fname) {
     }
     N_DIMS = cols;
     N_DATA = rows;
-    cout << "Dataset: #DATA = " << N_DATA << " , #DIMENSIONS = " << N_DIMS << "\n";
+    cout << "Dataset: #DATA = " << N_DATA << " , #DIMENSIONS = " << N_DIMS << endl;
     file.close();
 }
 
@@ -424,8 +424,7 @@ void loadData(string fname, double **array) {
                         break;
                     try {
                         array[i][row] = stod(line);
-                    }
-                    catch (const invalid_argument e) {
+                    } catch (const invalid_argument e) {
                         cout << "NaN found in file " << fname << " line " << row
                              << endl;
                         e.what();
@@ -436,7 +435,7 @@ void loadData(string fname, double **array) {
         row++;
     }
     if (!inputFile.eof()) {
-        cerr << "Could not read file " << fname << "\n";
+        cerr << "Could not read file " << fname << endl;
         __throw_invalid_argument("File not found.");
     }
 }
@@ -564,14 +563,14 @@ kmeansreport Elbow_K_means(double **data_to_transform) {
         } else {
             //Sum of Squares within-clusters
             if ((previous.energy - final.energy) <= WCSS_THRES) {
-                cout << "The optimal K is " << final.k << "\n";
+                cout << "The optimal K is " << final.k << endl;
                 return final;
             } else {
                 previous = final;
             }
         }
     }
-    cout << "The optimal K is " << final.k << "\n";
+    cout << "The optimal K is " << final.k << endl;
     return final;
 }
 
@@ -589,7 +588,7 @@ double L2distance(double xc, double yc, double x1, double y1)
 
 void csv_out_info(double **data, string name, bool *incircle, kmeansreport report) {
     fstream fout;
-    fout.open("../plot/" + name, ios::out | ios::app);
+    fout.open("../plot/HTRU/" + name, ios::out | ios::app);
 
     for (int i = 0; i < N_DATA; ++i) {
         for (int j = 0; j < 2; ++j) {
@@ -606,7 +605,7 @@ void csv_out_info(double **data, string name, bool *incircle, kmeansreport repor
 
     fout.close();
     fstream fout2;
-    fout2.open("../centroids_" + name, ios::out | ios::app);
+    fout2.open("../plot/HTRU/centroids_" + name, ios::out | ios::app);
     for (int i = 0; i < report.k; ++i) {
         for (int j = 0; j < 2; ++j) {
             fout2 << report.c[i][j] << ",";
