@@ -17,9 +17,10 @@ using namespace alglib;
 
 int N_DIMS; //Number of dimensions
 int N_DATA; //Number of observations
-string filename = "../Iris.csv";
+//string filename = "../Iris.csv";
 //string filename = "../HTRU_2.csv";
-//string filename = "../dataset_benchmark/dim256.csv";
+string filename = "../dataset_benchmark/dim032.csv";
+string outdir = "../plot/dim032/";
 
 struct MaxMin {
     double min;
@@ -265,15 +266,15 @@ int main() {
     }
 
     //Concatenate PC1_corr, PC2_corr
-    memcpy(combine[0], newspace[0], N_DATA);
-    memcpy(combine[1], newspace[1], N_DATA);
+    memcpy(combine[0], newspace[0], N_DATA * sizeof(double));
+    memcpy(combine[1], newspace[1], N_DATA * sizeof(double));
 
     free(newspace_storage);
     free(newspace);
 
     for (int i = 0; i < uncorr_vars; ++i) {
         //Concatenate PC1_corr, PC2_corr and i-th dimension of uncorr
-        memcpy(combine[2], data[uncorr[i]], N_DATA);
+        memcpy(combine[2], data[uncorr[i]], N_DATA * sizeof(double));
 
         PCA_transform(combine, 3, cs[i]);
         cout << "PCA computed on PC1_CORR, PC2_CORR and " << i+1 << "-th dimension of UNCORR" << endl;
@@ -588,7 +589,7 @@ double L2distance(double xc, double yc, double x1, double y1)
 
 void csv_out_info(double **data, string name, bool *incircle, kmeansreport report) {
     fstream fout;
-    fout.open("../plot/HTRU/" + name, ios::out | ios::app);
+    fout.open(outdir + name, ios::out | ios::app);
 
     for (int i = 0; i < N_DATA; ++i) {
         for (int j = 0; j < 2; ++j) {
@@ -605,7 +606,7 @@ void csv_out_info(double **data, string name, bool *incircle, kmeansreport repor
 
     fout.close();
     fstream fout2;
-    fout2.open("../plot/HTRU/centroids_" + name, ios::out | ios::app);
+    fout2.open(outdir + "centroids_" + name, ios::out | ios::app);
     for (int i = 0; i < report.k; ++i) {
         for (int j = 0; j < 2; ++j) {
             fout2 << report.c[i][j] << ",";
