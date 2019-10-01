@@ -13,7 +13,7 @@ using namespace alglib;
 
 #define K_MAX 10 //Max number of clusters for Elbow criterion
 #define WCSS_THRES 0.1 //Threshold for Within-Cluster Sum of Squares for Elbow criterion
-#define PERCENTAGE_INCIRCLE 0.20 //Percentage of points within the circle
+#define PERCENTAGE_INCIRCLE 0.80 //Percentage of points within the circle
 
 int N_DIMS; //Number of dimensions
 int N_DATA; //Number of observations
@@ -26,217 +26,15 @@ struct MaxMin {
     double max;
 };
 
-void getDatasetDims(string fname) {
-    int cols = 0;
-    int rows = 0;
-    ifstream file(fname);
-    string line;
-    int first = 1;
-
-    while (getline(file, line)) {
-        if (first) {
-            istringstream iss(line);
-            string result;
-            while (getline(iss, result, ','))
-            {
-                cols++;
-            }
-            first = 0;
-        }
-        rows++;
-    }
-    N_DIMS = cols;
-    N_DATA = rows;
-    cout << "Dataset: #DATA = " << N_DATA << " , #DIMENSIONS = " << N_DIMS << "\n";
-    file.close();
-}
-
-
-void loadData(string fname, double **array) {
-    ifstream inputFile(fname);
-    int row = 0;
-    while (inputFile) {
-        string s;
-        if (!getline(inputFile, s)) break;
-        if (s[0] != '#') {
-            istringstream ss(s);
-            while (ss) {
-                for (int i = 0; i < N_DIMS; i++) {
-                    string line;
-                    if (!getline(ss, line, ','))
-                        break;
-                    try {
-                        array[i][row] = stod(line);
-                    }
-                    catch (const invalid_argument e) {
-                        cout << "NaN found in file " << fname << " line " << row
-                             << endl;
-                        e.what();
-                    }
-                }
-            }
-        }
-        row++;
-    }
-    if (!inputFile.eof()) {
-        cerr << "Could not read file " << fname << "\n";
-        __throw_invalid_argument("File not found.");
-    }
-}
-
-double getMean(double *arr) {
-    double sum = 0.0;
-
-    for (int i = 0; i<N_DATA; i++) {
-        sum += arr[i];
-    }
-
-    return sum/N_DATA;
-}
-
-struct MaxMin getMinMax(double *arr) {
-    struct MaxMin minmax;
-
-    /*If there is only one element then return it as min and max both*/
-    if (N_DATA * N_DIMS == 1) {
-        minmax.max = arr[0];
-        minmax.min = arr[0];
-        return minmax;
-    }
-
-    /* If there are more than one elements, then initialize min and max*/
-    if (arr[0] > arr[1]) {
-        minmax.max = arr[0];
-        minmax.min = arr[1];
-    } else {
-        minmax.max = arr[1];
-        minmax.min = arr[0];
-    }
-
-    for (int i = 2; i<N_DATA * N_DIMS; i++) {
-        if (arr[i] >  minmax.max)
-            minmax.max = arr[i];
-        else if (arr[i] <  minmax.min)
-            minmax.min = arr[i];
-    }
-    return minmax;
-}
-
-double PearsonCoefficient(double *X, double *Y) {
-    double sum_X = 0, sum_Y = 0, sum_XY = 0;
-    double squareSum_X = 0, squareSum_Y = 0;
-
-    for (int i = 0; i < N_DATA; i++) {
-        sum_X += X[i];
-        sum_Y += Y[i];
-        sum_XY += X[i] * Y[i]; // sum of X[i] * Y[i]
-        squareSum_X += X[i] * X[i]; // sum of square of array elements
-        squareSum_Y += Y[i] * Y[i];
-    }
-
-    double corr = (double)(N_DATA * sum_XY - sum_X * sum_Y)
-                  / sqrt((N_DATA * squareSum_X - sum_X * sum_X)
-                         * (N_DATA * squareSum_Y - sum_Y * sum_Y));
-    return corr;
-}
-
-void PCA_transform(double **data_to_transform, int data_dim, double **new_space) {
-    real_2d_array dset, basis;
-    real_1d_array variances;
-    variances.setlength(2);
-    dset.setlength(N_DATA, data_dim);
-    basis.setlength(data_dim, 2);
-    for (int i = 0; i < N_DATA; ++i) {
-        for(int j = 0; j < data_dim; j++) {
-            dset[i][j] = data_to_transform[j][i];
-        }
-    }
-
-    pcatruncatedsubspace(dset, N_DATA, data_dim, 2, 0.0, 0, variances, basis);
-
-//    cout << "PCA result: " << endl;
-//    for (int i = 0; i < data_dim; ++i) {
-//        for(int j = 0; j < 2; j++) {
-//            cout << basis[i][j] << " ";
-//        }
-//        cout << "\n";
-//    }
-
-    for (int i=0; i < N_DATA; i++) {
-        for (int j=0;j<2;j++) {
-            new_space[j][i]=0;
-            for (int k=0;k<data_dim;k++) {
-                new_space[j][i] += dset[i][k] * basis[k][j];
-            }
-        }
-    }
-
-//    cout << "The resulting subspace: " << endl;
-//    for(int j = 0; j < 2; j++) {
-//        for (int i = 0; i < N_DATA; ++i) {
-//            cout << new_space[j][i] << " ";
-//        }
-//        cout << "\n";
-//    }
-}
-
-kmeansreport Elbow_K_means(double **data_to_transform) {
-    clusterizerstate status;
-    real_2d_array data;
-    kmeansreport final;
-
-    data.setlength(N_DATA, 2);
-    for (int i = 0; i < N_DATA; ++i) {
-        for (int j = 0; j < 2; j++) {
-            data[i][j] = data_to_transform[j][i];
-        }
-    }
-
-    kmeansreport previous;
-    for (int j = 1; j <= K_MAX; ++j) {
-        clusterizercreate(status);
-        clusterizersetpoints(status, data, 2);
-        clusterizerrunkmeans(status, j, final);
-
-        if (j == 1) {
-            previous = final;
-        } else {
-            //Sum of Squares within-clusters
-            if ((previous.energy - final.energy) <= WCSS_THRES) {
-                cout << "The optimal K is " << final.k << "\n";
-                return final;
-            } else {
-                previous = final;
-            }
-        }
-    }
-    cout << "The optimal K is " << final.k << "\n";
-    return final;
-}
-
-double L2distance(double xc, double yc, double x1, double y1)
-{
-    double x = xc - x1; //calculating number to square in next step
-    double y = yc - y1;
-    double dist;
-
-    dist = pow(x, 2) + pow(y, 2);       //calculating Euclidean distance
-    dist = sqrt(dist);
-
-    return dist;
-}
-
-void create_csv_out(double **data, string name, int rows, int cols) {
-   fstream fout;
-   fout.open("../" + name, ios::out | ios::app);
-
-    for (int i = 0; i < rows; ++i) {
-        for (int j = 0; j < cols; ++j) {
-            fout << data[j][i] << ",";
-        }
-        fout << "\n";
-    }
-}
+void getDatasetDims(string fname);
+void loadData(string fname, double **array);
+double getMean(double *arr);
+struct MaxMin getMinMax(double *arr);
+double PearsonCoefficient(double *X, double *Y);
+void PCA_transform(double **data_to_transform, int data_dim, double **new_space);
+kmeansreport Elbow_K_means(double **data_to_transform);
+double L2distance(double xc, double yc, double x1, double y1);
+void csv_out_info(double **data, string name, bool *incircle, kmeansreport report);
 
 int main() {
     cout << fixed;
@@ -508,15 +306,12 @@ int main() {
     }
 
     for (int i = 0; i < uncorr_vars; ++i) {
-//        string fileoutname;
-//        fileoutname = std::to_string('dataout' + (char) i + '.csv');
-//        create_csv_out(cs[i], fileoutname, N_DATA, 2);
         kmeansreport rep;
         cout << "Candidate Subspace " << i+1 << ": ";
         rep = Elbow_K_means(cs[i]); //Clustering through Elbow criterion on i-th candidate subspace
         for (int j = 0; j < rep.k; ++j) {
             int k = 0, previous_k = 0;
-            while (k < PERCENTAGE_INCIRCLE * N_DATA) {
+            while (k < PERCENTAGE_INCIRCLE * N_DATA/rep.k) {
                 double dist = 0.0;
                 int n_points = 0;
                 for (int l = 0; l < N_DATA; ++l) {
@@ -542,6 +337,10 @@ int main() {
                 }
             }
         }
+//        string fileoutname = "dataout";
+//        string num = to_string(i);
+//        string concat = fileoutname + num + ".csv";
+//        csv_out_info(cs[i], concat, incircle[i], rep);
     }
 
     auto end = chrono::steady_clock::now();
@@ -583,4 +382,236 @@ int main() {
          << " ms" << endl;
 
     return 0;
+}
+
+void getDatasetDims(string fname) {
+    int cols = 0;
+    int rows = 0;
+    ifstream file(fname);
+    string line;
+    int first = 1;
+
+    while (getline(file, line)) {
+        if (first) {
+            istringstream iss(line);
+            string result;
+            while (getline(iss, result, ','))
+            {
+                cols++;
+            }
+            first = 0;
+        }
+        rows++;
+    }
+    N_DIMS = cols;
+    N_DATA = rows;
+    cout << "Dataset: #DATA = " << N_DATA << " , #DIMENSIONS = " << N_DIMS << "\n";
+    file.close();
+}
+
+void loadData(string fname, double **array) {
+    ifstream inputFile(fname);
+    int row = 0;
+    while (inputFile) {
+        string s;
+        if (!getline(inputFile, s)) break;
+        if (s[0] != '#') {
+            istringstream ss(s);
+            while (ss) {
+                for (int i = 0; i < N_DIMS; i++) {
+                    string line;
+                    if (!getline(ss, line, ','))
+                        break;
+                    try {
+                        array[i][row] = stod(line);
+                    }
+                    catch (const invalid_argument e) {
+                        cout << "NaN found in file " << fname << " line " << row
+                             << endl;
+                        e.what();
+                    }
+                }
+            }
+        }
+        row++;
+    }
+    if (!inputFile.eof()) {
+        cerr << "Could not read file " << fname << "\n";
+        __throw_invalid_argument("File not found.");
+    }
+}
+
+double getMean(double *arr) {
+    double sum = 0.0;
+
+    for (int i = 0; i<N_DATA; i++) {
+        sum += arr[i];
+    }
+
+    return sum/N_DATA;
+}
+
+struct MaxMin getMinMax(double *arr) {
+    struct MaxMin minmax;
+
+    /*If there is only one element then return it as min and max both*/
+    if (N_DATA * N_DIMS == 1) {
+        minmax.max = arr[0];
+        minmax.min = arr[0];
+        return minmax;
+    }
+
+    /* If there are more than one elements, then initialize min and max*/
+    if (arr[0] > arr[1]) {
+        minmax.max = arr[0];
+        minmax.min = arr[1];
+    } else {
+        minmax.max = arr[1];
+        minmax.min = arr[0];
+    }
+
+    for (int i = 2; i<N_DATA * N_DIMS; i++) {
+        if (arr[i] >  minmax.max)
+            minmax.max = arr[i];
+        else if (arr[i] <  minmax.min)
+            minmax.min = arr[i];
+    }
+    return minmax;
+}
+
+double PearsonCoefficient(double *X, double *Y) {
+    double sum_X = 0, sum_Y = 0, sum_XY = 0;
+    double squareSum_X = 0, squareSum_Y = 0;
+
+    for (int i = 0; i < N_DATA; i++) {
+        sum_X += X[i];
+        sum_Y += Y[i];
+        sum_XY += X[i] * Y[i]; // sum of X[i] * Y[i]
+        squareSum_X += X[i] * X[i]; // sum of square of array elements
+        squareSum_Y += Y[i] * Y[i];
+    }
+
+    double corr = (double)(N_DATA * sum_XY - sum_X * sum_Y)
+                  / sqrt((N_DATA * squareSum_X - sum_X * sum_X)
+                         * (N_DATA * squareSum_Y - sum_Y * sum_Y));
+    return corr;
+}
+
+void PCA_transform(double **data_to_transform, int data_dim, double **new_space) {
+    real_2d_array dset, basis;
+    real_1d_array variances;
+    variances.setlength(2);
+    dset.setlength(N_DATA, data_dim);
+    basis.setlength(data_dim, 2);
+    for (int i = 0; i < N_DATA; ++i) {
+        for(int j = 0; j < data_dim; j++) {
+            dset[i][j] = data_to_transform[j][i];
+        }
+    }
+
+    pcatruncatedsubspace(dset, N_DATA, data_dim, 2, 0.0, 0, variances, basis);
+
+//    cout << "PCA result: " << endl;
+//    for (int i = 0; i < data_dim; ++i) {
+//        for(int j = 0; j < 2; j++) {
+//            cout << basis[i][j] << " ";
+//        }
+//        cout << "\n";
+//    }
+
+    for (int i=0; i < N_DATA; i++) {
+        for (int j=0;j<2;j++) {
+            new_space[j][i]=0;
+            for (int k=0;k<data_dim;k++) {
+                new_space[j][i] += dset[i][k] * basis[k][j];
+            }
+        }
+    }
+
+//    cout << "The resulting subspace: " << endl;
+//    for(int j = 0; j < 2; j++) {
+//        for (int i = 0; i < N_DATA; ++i) {
+//            cout << new_space[j][i] << " ";
+//        }
+//        cout << "\n";
+//    }
+}
+
+kmeansreport Elbow_K_means(double **data_to_transform) {
+    clusterizerstate status;
+    real_2d_array data;
+    kmeansreport final;
+
+    data.setlength(N_DATA, 2);
+    for (int i = 0; i < N_DATA; ++i) {
+        for (int j = 0; j < 2; j++) {
+            data[i][j] = data_to_transform[j][i];
+        }
+    }
+
+    kmeansreport previous;
+    for (int j = 1; j <= K_MAX; ++j) {
+        clusterizercreate(status);
+        clusterizersetpoints(status, data, 2);
+        clusterizerrunkmeans(status, j, final);
+        if (final.terminationtype < 0) {
+            cout << "Error in KMeans run. Termination Type: " << final.terminationtype << endl;
+            exit(-1);
+        }
+
+        if (j == 1) {
+            previous = final;
+        } else {
+            //Sum of Squares within-clusters
+            if ((previous.energy - final.energy) <= WCSS_THRES) {
+                cout << "The optimal K is " << final.k << "\n";
+                return final;
+            } else {
+                previous = final;
+            }
+        }
+    }
+    cout << "The optimal K is " << final.k << "\n";
+    return final;
+}
+
+double L2distance(double xc, double yc, double x1, double y1)
+{
+    double x = xc - x1; //calculating number to square in next step
+    double y = yc - y1;
+    double dist;
+
+    dist = pow(x, 2) + pow(y, 2);       //calculating Euclidean distance
+    dist = sqrt(dist);
+
+    return dist;
+}
+
+void csv_out_info(double **data, string name, bool *incircle, kmeansreport report) {
+    fstream fout;
+    fout.open("../plot/" + name, ios::out | ios::app);
+
+    for (int i = 0; i < N_DATA; ++i) {
+        for (int j = 0; j < 2; ++j) {
+            fout << data[j][i] << ",";
+        }
+        if (incircle[i]) {
+            fout << "1,";
+        } else {
+            fout << "0,";
+        }
+        fout << report.cidx[i];
+        fout << "\n";
+    }
+
+    fout.close();
+    fstream fout2;
+    fout2.open("../centroids_" + name, ios::out | ios::app);
+    for (int i = 0; i < report.k; ++i) {
+        for (int j = 0; j < 2; ++j) {
+            fout2 << report.c[i][j] << ",";
+        }
+        fout2 << "\n";
+    }
+    fout2.close();
 }

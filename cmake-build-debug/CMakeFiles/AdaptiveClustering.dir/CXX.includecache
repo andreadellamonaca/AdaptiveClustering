@@ -149,6 +149,8 @@ fstream
 -
 chrono
 -
+algorithm
+-
 alglib/dataanalysis.h
 /home/andrea/Scrivania/AdaptiveClustering/alglib/dataanalysis.h
 alglib/stdafx.h
