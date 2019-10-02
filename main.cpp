@@ -13,27 +13,25 @@ using namespace alglib;
 
 #define K_MAX 10 //Max number of clusters for Elbow criterion
 #define WCSS_THRES 0.1 //Threshold for Within-Cluster Sum of Squares for Elbow criterion
-#define PERCENTAGE_INCIRCLE 0.80 //Percentage of points within the circle
+#define PERCENTAGE_INCIRCLE 0.90 //Percentage of points within the circle
+#define PERCENTAGE_SUBSPACES 0.80 //Percentage of subspaces for outliers occurrences evaluation
 
 int N_DIMS; //Number of dimensions
 int N_DATA; //Number of observations
+bool save_output = false; //Flag for csv output generation
 //string filename = "../Iris.csv";
-//string filename = "../HTRU_2.csv";
-string filename = "../dataset_benchmark/dim032.csv";
-string outdir = "../plot/dim032/";
-
-struct MaxMin {
-    double min;
-    double max;
-};
+string filename = "../HTRU_2.csv";
+//string filename = "../dataset_benchmark/dim032.csv";
+string outdir = "../plot/HTRU/";
 
 void getDatasetDims(string fname);
 void loadData(string fname, double **array);
 double getMean(double *arr);
-struct MaxMin getMinMax(double *arr);
 double PearsonCoefficient(double *X, double *Y);
 void PCA_transform(double **data_to_transform, int data_dim, double **new_space);
+int cluster_size(kmeansreport rep, int cluster_id);
 kmeansreport Elbow_K_means(double **data_to_transform);
+double getAvgDiameter(real_2d_array dataset, kmeansreport instance);
 double L2distance(double xc, double yc, double x1, double y1);
 void csv_out_info(double **data, string name, bool *incircle, kmeansreport report);
 
@@ -81,20 +79,7 @@ int main() {
         }
     }
 
-    // Normalization - MaxMinScaler
-//    struct MaxMin minmax = getMinMax(data_storage);
-//
-//    for (int i = 0; i < N_DATA * N_DIMS; ++i) {
-//        data_storage[i] = (data_storage[i] - minmax.min)/(minmax.max - minmax.min);
-//    }
-
     cout << "Dataset standardized" << endl;
-//    for (int i = 0; i < N_DIMS; ++i) {
-//        for(int j = 0; j < N_DATA; j++) {
-//            cout << data[i][j] << " ";
-//        }
-//        cout << "\n";
-//    }
 
     //Define the structure to load the Correlation Matrix
     double **pearson, *pearson_storage;
@@ -312,16 +297,17 @@ int main() {
         rep = Elbow_K_means(cs[i]); //Clustering through Elbow criterion on i-th candidate subspace
         for (int j = 0; j < rep.k; ++j) {
             int k = 0, previous_k = 0;
-            while (k < PERCENTAGE_INCIRCLE * N_DATA/rep.k) {
+            int cls_size = cluster_size(rep, j);
+            while (k < PERCENTAGE_INCIRCLE * cls_size) {
                 double dist = 0.0;
-                int n_points = 0;
+                int actual_cluster_size = 0;
                 for (int l = 0; l < N_DATA; ++l) {
                     if (rep.cidx[l] == j && !(incircle[i][l])) {
                         dist += L2distance(rep.c[j][0], rep.c[j][1], cs[i][0][l], cs[i][1][l]);
-                        n_points++;
+                        actual_cluster_size++;
                     }
                 }
-                double dist_mean = dist/n_points;
+                double dist_mean = dist / actual_cluster_size;
                 for (int l = 0; l < N_DATA; ++l) {
                     if (rep.cidx[l] == j && !(incircle[i][l])) {
                         if (L2distance(rep.c[j][0], rep.c[j][1], cs[i][0][l], cs[i][1][l]) <= dist_mean) {
@@ -338,10 +324,12 @@ int main() {
                 }
             }
         }
-        string fileoutname = "dataout";
-        string num = to_string(i);
-        string concat = fileoutname + num + ".csv";
-        csv_out_info(cs[i], concat, incircle[i], rep);
+        if (save_output) {
+            string fileoutname = "dataout";
+            string num = to_string(i);
+            string concat = fileoutname + num + ".csv";
+            csv_out_info(cs[i], concat, incircle[i], rep);
+        }
     }
 
     auto end = chrono::steady_clock::now();
@@ -357,7 +345,7 @@ int main() {
             }
         }
 
-        if (occurrence > 0) {
+        if (occurrence >= std::round(uncorr_vars * PERCENTAGE_SUBSPACES)) {
             tot_outliers++;
             cout << i << ") ";
             for (int l = 0; l < N_DIMS; ++l) {
@@ -451,34 +439,6 @@ double getMean(double *arr) {
     return sum/N_DATA;
 }
 
-struct MaxMin getMinMax(double *arr) {
-    struct MaxMin minmax;
-
-    /*If there is only one element then return it as min and max both*/
-    if (N_DATA * N_DIMS == 1) {
-        minmax.max = arr[0];
-        minmax.min = arr[0];
-        return minmax;
-    }
-
-    /* If there are more than one elements, then initialize min and max*/
-    if (arr[0] > arr[1]) {
-        minmax.max = arr[0];
-        minmax.min = arr[1];
-    } else {
-        minmax.max = arr[1];
-        minmax.min = arr[0];
-    }
-
-    for (int i = 2; i<N_DATA * N_DIMS; i++) {
-        if (arr[i] >  minmax.max)
-            minmax.max = arr[i];
-        else if (arr[i] <  minmax.min)
-            minmax.min = arr[i];
-    }
-    return minmax;
-}
-
 double PearsonCoefficient(double *X, double *Y) {
     double sum_X = 0, sum_Y = 0, sum_XY = 0;
     double squareSum_X = 0, squareSum_Y = 0;
@@ -537,6 +497,16 @@ void PCA_transform(double **data_to_transform, int data_dim, double **new_space)
 //    }
 }
 
+int cluster_size(kmeansreport rep, int cluster_id) {
+    int occurrence = 0;
+    for (int i = 0; i < rep.npoints; ++i) {
+        if (rep.cidx[i] == cluster_id) {
+            occurrence++;
+        }
+    }
+    return occurrence;
+}
+
 kmeansreport Elbow_K_means(double **data_to_transform) {
     clusterizerstate status;
     real_2d_array data;
@@ -559,6 +529,8 @@ kmeansreport Elbow_K_means(double **data_to_transform) {
             exit(-1);
         }
 
+        double avg_diameter = getAvgDiameter(data, final);
+
         if (j == 1) {
             previous = final;
         } else {
@@ -573,6 +545,28 @@ kmeansreport Elbow_K_means(double **data_to_transform) {
     }
     cout << "The optimal K is " << final.k << endl;
     return final;
+}
+
+double getAvgDiameter(real_2d_array dataset, kmeansreport instance)
+{
+    real_2d_array dist_matrix;
+    dist_matrix.setlength(instance.npoints, instance.npoints);
+    clusterizergetdistances(dataset, instance.npoints, instance.nfeatures, 2, dist_matrix);
+    double tot_diameters = 0.0;
+    for (int i = 0; i < instance.k; ++i) {
+        double max = 0.0;
+        for (int l = 0; l < instance.npoints; ++l) {
+            if (instance.cidx[l] == i) {
+                for (int m = 0; m < instance.npoints; ++m) {
+                    if (instance.cidx[m] == i && dist_matrix[l][m] > max) {
+                        max = dist_matrix[l][m];
+                    }
+                }
+            }
+        }
+        tot_diameters += max;
+    }
+    return tot_diameters / instance.k;
 }
 
 double L2distance(double xc, double yc, double x1, double y1)
