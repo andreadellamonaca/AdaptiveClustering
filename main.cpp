@@ -24,7 +24,7 @@ string filename = "../Iris.csv";
 //string filename = "../dataset_benchmark/dim1024.csv";
 
 bool save_output = false; //Flag for csv output generation
-string outdir = "../plot/dim1024/";
+string outdir = "../plot/iris/";
 
 void getDatasetDims(string fname);
 void loadData(string fname, double **array);
@@ -292,11 +292,7 @@ int main() {
         incircle[i] = &incircle_storage[i * N_DATA];
     }
 
-    for (int i = 0; i < uncorr_vars; ++i) {
-        for(int j = 0; j < N_DATA; j++) {
-            incircle[i][j] = false;
-        }
-    }
+    fill_n(incircle_storage, uncorr_vars * N_DATA, false);
 
     for (int i = 0; i < uncorr_vars; ++i) {
         kmeansreport rep;
@@ -527,7 +523,7 @@ kmeansreport Elbow_K_means(double **data_to_transform) {
     }
 
     kmeansreport previous;
-    double previous_score;
+    double previous_score = 0.0;
     for (int j = 1; j <= K_MAX; ++j) {
         clusterizercreate(status);
         clusterizersetpoints(status, data, 2);
