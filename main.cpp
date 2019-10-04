@@ -12,17 +12,19 @@ using namespace std;
 using namespace alglib;
 
 #define K_MAX 10 //Max number of clusters for Elbow criterion
-#define WCSS_THRES 0.1 //Threshold for Within-Cluster Sum of Squares for Elbow criterion
+#define ELBOW_THRES 5 //"Percentage of Variance Explained" Threshold for Elbow criterion
 #define PERCENTAGE_INCIRCLE 0.90 //Percentage of points within the circle
 #define PERCENTAGE_SUBSPACES 0.80 //Percentage of subspaces for outliers occurrences evaluation
 
 int N_DIMS; //Number of dimensions
 int N_DATA; //Number of observations
+
+string filename = "../Iris.csv";
+//string filename = "../HTRU_2.csv";
+//string filename = "../dataset_benchmark/dim1024.csv";
+
 bool save_output = false; //Flag for csv output generation
-//string filename = "../Iris.csv";
-string filename = "../HTRU_2.csv";
-//string filename = "../dataset_benchmark/dim032.csv";
-string outdir = "../plot/HTRU/";
+string outdir = "../plot/dim1024/";
 
 void getDatasetDims(string fname);
 void loadData(string fname, double **array);
@@ -31,7 +33,12 @@ double PearsonCoefficient(double *X, double *Y);
 void PCA_transform(double **data_to_transform, int data_dim, double **new_space);
 int cluster_size(kmeansreport rep, int cluster_id);
 kmeansreport Elbow_K_means(double **data_to_transform);
+
 double getAvgDiameter(real_2d_array dataset, kmeansreport instance);
+double getAvgRadius(real_2d_array dataset, kmeansreport instance);
+double Calinski_Harabasz_index(double **data, kmeansreport instance);
+double F_measure(double **data, kmeansreport instance);
+
 double L2distance(double xc, double yc, double x1, double y1);
 void csv_out_info(double **data, string name, bool *incircle, kmeansreport report);
 
@@ -520,6 +527,7 @@ kmeansreport Elbow_K_means(double **data_to_transform) {
     }
 
     kmeansreport previous;
+    double previous_score;
     for (int j = 1; j <= K_MAX; ++j) {
         clusterizercreate(status);
         clusterizersetpoints(status, data, 2);
@@ -529,17 +537,21 @@ kmeansreport Elbow_K_means(double **data_to_transform) {
             exit(-1);
         }
 
-        double avg_diameter = getAvgDiameter(data, final);
+        //double avg_diameter = getAvgDiameter(data, final);
+        //double avg_radius = getAvgRadius(data, final);
+        //double ch = Calinski_Harabasz_index(data_to_transform, final);
+        double ch = F_measure(data_to_transform, final);
 
         if (j == 1) {
             previous = final;
+            previous_score = F_measure(data_to_transform, final);
         } else {
-            //Sum of Squares within-clusters
-            if ((previous.energy - final.energy) <= WCSS_THRES) {
+            if (abs(previous_score - F_measure(data_to_transform, final)) <= ELBOW_THRES) {
                 cout << "The optimal K is " << final.k << endl;
                 return final;
             } else {
                 previous = final;
+                previous_score = F_measure(data_to_transform, final);
             }
         }
     }
@@ -557,7 +569,7 @@ double getAvgDiameter(real_2d_array dataset, kmeansreport instance)
         double max = 0.0;
         for (int l = 0; l < instance.npoints; ++l) {
             if (instance.cidx[l] == i) {
-                for (int m = 0; m < instance.npoints; ++m) {
+                for (int m = l+1; m < instance.npoints; ++m) {
                     if (instance.cidx[m] == i && dist_matrix[l][m] > max) {
                         max = dist_matrix[l][m];
                     }
@@ -567,6 +579,54 @@ double getAvgDiameter(real_2d_array dataset, kmeansreport instance)
         tot_diameters += max;
     }
     return tot_diameters / instance.k;
+}
+
+double getAvgRadius(real_2d_array dataset, kmeansreport instance)
+{
+    double tot_radius = 0.0;
+    for (int i = 0; i < instance.k; ++i) {
+        double max = 0.0;
+        for (int l = 0; l < instance.npoints; ++l) {
+            double actual_radius = L2distance(instance.c[i][0], instance.c[i][1], dataset[l][0], dataset[l][1]);
+            if (instance.cidx[l] == i && actual_radius > max) {
+                max = actual_radius;
+            }
+        }
+        tot_radius += max;
+    }
+    return tot_radius / instance.k;
+}
+
+double Calinski_Harabasz_index(double **data, kmeansreport instance)
+{
+    double pc1_mean = getMean(data[0]);
+    double pc2_mean = getMean(data[1]);
+    double bss = 0.0;
+    double CH_index = 0.0;
+    for (int i = 0; i < instance.k; ++i) {
+        double n_points = cluster_size(instance, i);
+        bss += n_points * pow(L2distance(instance.c[i][0], instance.c[i][1], pc1_mean, pc2_mean), 2);
+    }
+    if (bss == 0) {
+        return 0.0;
+    }
+    CH_index = ((instance.npoints - instance.k) * bss) / ((instance.k - 1) * instance.energy);
+    return CH_index;
+}
+
+double F_measure(double **data, kmeansreport instance)
+{
+    double pc1_mean = getMean(data[0]);
+    double pc2_mean = getMean(data[1]);
+    double bss = 0.0;
+    for (int i = 0; i < instance.k; ++i) {
+        double n_points = cluster_size(instance, i);
+        bss += n_points * pow(L2distance(instance.c[i][0], instance.c[i][1], pc1_mean, pc2_mean), 2);
+    }
+    if (bss == 0) {
+        return 0.0;
+    }
+    return (bss * 100) / (bss+instance.energy);
 }
 
 double L2distance(double xc, double yc, double x1, double y1)
@@ -583,7 +643,7 @@ double L2distance(double xc, double yc, double x1, double y1)
 
 void csv_out_info(double **data, string name, bool *incircle, kmeansreport report) {
     fstream fout;
-    fout.open(outdir + name, ios::out | ios::app);
+    fout.open(outdir + name, ios::out | ios::trunc);
 
     for (int i = 0; i < N_DATA; ++i) {
         for (int j = 0; j < 2; ++j) {
@@ -600,7 +660,7 @@ void csv_out_info(double **data, string name, bool *incircle, kmeansreport repor
 
     fout.close();
     fstream fout2;
-    fout2.open(outdir + "centroids_" + name, ios::out | ios::app);
+    fout2.open(outdir + "centroids_" + name, ios::out | ios::trunc);
     for (int i = 0; i < report.k; ++i) {
         for (int j = 0; j < 2; ++j) {
             fout2 << report.c[i][j] << ",";
