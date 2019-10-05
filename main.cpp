@@ -12,7 +12,8 @@ using namespace std;
 using namespace alglib;
 
 #define K_MAX 10 //Max number of clusters for Elbow criterion
-#define ELBOW_THRES 5 //"Percentage of Variance Explained" Threshold for Elbow criterion
+//#define ELBOW_THRES 5 //"Percentage of Variance Explained" Threshold for Elbow criterion
+#define ELBOW_THRES 0.02 //BetaCV Threshold for Elbow criterion
 #define PERCENTAGE_INCIRCLE 0.90 //Percentage of points within the circle
 #define PERCENTAGE_SUBSPACES 0.80 //Percentage of subspaces for outliers occurrences evaluation
 
@@ -21,7 +22,8 @@ int N_DATA; //Number of observations
 
 string filename = "../Iris.csv";
 //string filename = "../HTRU_2.csv";
-//string filename = "../dataset_benchmark/dim1024.csv";
+//string filename = "../dataset_benchmark/dim032.csv";
+//string filename = "../Absenteeism_at_work.csv";
 
 bool save_output = false; //Flag for csv output generation
 string outdir = "../plot/iris/";
@@ -36,8 +38,12 @@ kmeansreport Elbow_K_means(double **data_to_transform);
 
 double getAvgDiameter(real_2d_array dataset, kmeansreport instance);
 double getAvgRadius(real_2d_array dataset, kmeansreport instance);
+double BetweenClusterSS(double **data, kmeansreport instance);
 double Calinski_Harabasz_index(double **data, kmeansreport instance);
-double F_measure(double **data, kmeansreport instance);
+double PercentageVariance(double **data, kmeansreport instance);
+int WithinClusterPairs(kmeansreport instance);
+int BetweenClusterPairs(kmeansreport instance);
+double BetaCV(double **data, kmeansreport instance);
 
 double L2distance(double xc, double yc, double x1, double y1);
 void csv_out_info(double **data, string name, bool *incircle, kmeansreport report);
@@ -535,19 +541,23 @@ kmeansreport Elbow_K_means(double **data_to_transform) {
 
         //double avg_diameter = getAvgDiameter(data, final);
         //double avg_radius = getAvgRadius(data, final);
-        //double ch = Calinski_Harabasz_index(data_to_transform, final);
-        double ch = F_measure(data_to_transform, final);
 
         if (j == 1) {
             previous = final;
-            previous_score = F_measure(data_to_transform, final);
         } else {
-            if (abs(previous_score - F_measure(data_to_transform, final)) <= ELBOW_THRES) {
+
+            //double ch = Calinski_Harabasz_index(data_to_transform, final);
+            //double pv = PercentageVariance(data_to_transform, final);
+            //double cv = BetaCV(data_to_transform, final);
+
+//            if (abs(previous_score - PercentageVariance(data_to_transform, final)) <= ELBOW_THRES) {
+            if (abs(previous_score - BetaCV(data_to_transform, final)) <= ELBOW_THRES) {
                 cout << "The optimal K is " << final.k << endl;
                 return final;
             } else {
                 previous = final;
-                previous_score = F_measure(data_to_transform, final);
+                //previous_score = PercentageVariance(data_to_transform, final);
+                previous_score = BetaCV(data_to_transform, final);
             }
         }
     }
@@ -595,22 +605,21 @@ double getAvgRadius(real_2d_array dataset, kmeansreport instance)
 
 double Calinski_Harabasz_index(double **data, kmeansreport instance)
 {
-    double pc1_mean = getMean(data[0]);
-    double pc2_mean = getMean(data[1]);
-    double bss = 0.0;
+    double bss = BetweenClusterSS(data, instance);
     double CH_index = 0.0;
-    for (int i = 0; i < instance.k; ++i) {
-        double n_points = cluster_size(instance, i);
-        bss += n_points * pow(L2distance(instance.c[i][0], instance.c[i][1], pc1_mean, pc2_mean), 2);
-    }
-    if (bss == 0) {
-        return 0.0;
-    }
+
     CH_index = ((instance.npoints - instance.k) * bss) / ((instance.k - 1) * instance.energy);
+
     return CH_index;
 }
 
-double F_measure(double **data, kmeansreport instance)
+double PercentageVariance(double **data, kmeansreport instance)
+{
+    double bss = BetweenClusterSS(data, instance);
+    return (bss * 100) / (bss+instance.energy);
+}
+
+double BetweenClusterSS(double **data, kmeansreport instance)
 {
     double pc1_mean = getMean(data[0]);
     double pc2_mean = getMean(data[1]);
@@ -619,10 +628,41 @@ double F_measure(double **data, kmeansreport instance)
         double n_points = cluster_size(instance, i);
         bss += n_points * pow(L2distance(instance.c[i][0], instance.c[i][1], pc1_mean, pc2_mean), 2);
     }
-    if (bss == 0) {
-        return 0.0;
+
+    return bss;
+}
+
+int WithinClusterPairs(kmeansreport instance)
+{
+    int counter = 0;
+    for (int i = 0; i < instance.k; ++i) {
+        int n_points = cluster_size(instance, i);
+        counter += (n_points - 1) * n_points;
     }
-    return (bss * 100) / (bss+instance.energy);
+    return counter/2;
+}
+
+int BetweenClusterPairs(kmeansreport instance)
+{
+    int counter = 0;
+    for (int i = 0; i < instance.k; ++i) {
+        int n_points = cluster_size(instance, i);
+        for (int j = 0; j < instance.k; ++j) {
+            if (i != j) {
+                counter += n_points * cluster_size(instance, j);
+            }
+        }
+    }
+    return counter/2;
+}
+
+double BetaCV(double **data, kmeansreport instance)
+{
+    double bss = BetweenClusterSS(data, instance);
+    int N_in = WithinClusterPairs(instance);
+    int N_out = BetweenClusterPairs(instance);
+
+    return ((double) N_out / N_in) * (instance.energy / bss);
 }
 
 double L2distance(double xc, double yc, double x1, double y1)
