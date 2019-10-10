@@ -214,6 +214,7 @@ AdaptiveClustering: CMakeFiles/AdaptiveClustering.dir/alglib/solvers.cpp.o
 AdaptiveClustering: CMakeFiles/AdaptiveClustering.dir/alglib/specialfunctions.cpp.o
 AdaptiveClustering: CMakeFiles/AdaptiveClustering.dir/alglib/statistics.cpp.o
 AdaptiveClustering: CMakeFiles/AdaptiveClustering.dir/build.make
+AdaptiveClustering: /usr/lib/x86_64-linux-gnu/libarmadillo.so
 AdaptiveClustering: CMakeFiles/AdaptiveClustering.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/andrea/Scrivania/AdaptiveClustering/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Linking CXX executable AdaptiveClustering"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/AdaptiveClustering.dir/link.txt --verbose=$(VERBOSE)

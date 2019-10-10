@@ -14,11 +14,20 @@
 # EXTERNAL cache entries
 ########################
 
+//Path to a file.
+ARMADILLO_INCLUDE_DIR:PATH=/usr/include
+
+//Path to a library.
+ARMADILLO_LIBRARY:FILEPATH=/usr/lib/x86_64-linux-gnu/libarmadillo.so
+
 //Value Computed by CMake
 AdaptiveClustering_BINARY_DIR:STATIC=/home/andrea/Scrivania/AdaptiveClustering/cmake-build-debug
 
 //Value Computed by CMake
 AdaptiveClustering_SOURCE_DIR:STATIC=/home/andrea/Scrivania/AdaptiveClustering
+
+//The directory containing a CMake configuration file for Ar.
+Ar_DIR:PATH=Ar_DIR-NOTFOUND
 
 //Path to a program.
 CMAKE_AR:FILEPATH=/usr/bin/ar
@@ -231,6 +240,10 @@ ProcessorCount_cmd_sysctl:FILEPATH=/sbin/sysctl
 # INTERNAL cache entries
 ########################
 
+//ADVANCED property for variable: ARMADILLO_INCLUDE_DIR
+ARMADILLO_INCLUDE_DIR-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: ARMADILLO_LIBRARY
+ARMADILLO_LIBRARY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_AR
 CMAKE_AR-ADVANCED:INTERNAL=1
 //This is the directory where this CMakeCache.txt was created
@@ -376,6 +389,8 @@ CMAKE_STRIP-ADVANCED:INTERNAL=1
 CMAKE_UNAME:INTERNAL=/bin/uname
 //ADVANCED property for variable: CMAKE_VERBOSE_MAKEFILE
 CMAKE_VERBOSE_MAKEFILE-ADVANCED:INTERNAL=1
+//Details about finding Armadillo
+FIND_PACKAGE_MESSAGE_DETAILS_Armadillo:INTERNAL=[/usr/lib/x86_64-linux-gnu/libarmadillo.so][/usr/include][v9.700.3()]
 //ADVANCED property for variable: ProcessorCount_cmd_getconf
 ProcessorCount_cmd_getconf-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: ProcessorCount_cmd_nproc

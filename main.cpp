@@ -2,23 +2,19 @@
 #include <cstring>
 #include <cmath>
 #include <iomanip>
-#include <fstream>
 #include <chrono>
 #include <algorithm>
 #include "alglib/dataanalysis.h"
-#include "alglib/stdafx.h"
+#include <armadillo>
 
 using namespace std;
 using namespace alglib;
+using namespace arma;
 
 #define K_MAX 10 //Max number of clusters for Elbow criterion
-//#define ELBOW_THRES 5 //"Percentage of Variance Explained" Threshold for Elbow criterion
-#define ELBOW_THRES 0.02 //BetaCV Threshold for Elbow criterion
+#define ELBOW_THRES 0.25 //BetaCV Threshold for Elbow criterion
 #define PERCENTAGE_INCIRCLE 0.90 //Percentage of points within the circle
 #define PERCENTAGE_SUBSPACES 0.80 //Percentage of subspaces for outliers occurrences evaluation
-
-int N_DIMS; //Number of dimensions
-int N_DATA; //Number of observations
 
 string filename = "../Iris.csv";
 //string filename = "../HTRU_2.csv";
@@ -26,35 +22,42 @@ string filename = "../Iris.csv";
 //string filename = "../Absenteeism_at_work.csv";
 
 bool save_output = false; //Flag for csv output generation
-string outdir = "../plot/iris/";
+string outdir = "../plot/dim032/";
 
-void getDatasetDims(string fname);
-void loadData(string fname, double **array);
-double getMean(double *arr);
-double PearsonCoefficient(double *X, double *Y);
-void PCA_transform(double **data_to_transform, int data_dim, double **new_space);
-int cluster_size(kmeansreport rep, int cluster_id);
-kmeansreport Elbow_K_means(double **data_to_transform);
+typedef struct cluster_report {
+    mat centroids;
+    int k;
+    double BetaCV;
+    int *cidx;
+} cluster_report;
 
-double getAvgDiameter(real_2d_array dataset, kmeansreport instance);
-double getAvgRadius(real_2d_array dataset, kmeansreport instance);
-double BetweenClusterSS(double **data, kmeansreport instance);
-double Calinski_Harabasz_index(double **data, kmeansreport instance);
-double PercentageVariance(double **data, kmeansreport instance);
-int WithinClusterPairs(kmeansreport instance);
-int BetweenClusterPairs(kmeansreport instance);
-double BetaCV(double **data, kmeansreport instance);
-
+void getDatasetDims(string fname, int *dim, int *data);
+void loadData(string fname, double **array, int n_dims);
+double getMean(double *arr, int n_data);
+void Standardize_dataset(double **data, int n_dims, int n_data);
+double PearsonCoefficient(double *X, double *Y, int n_data);
+void PCA_transform(double **data_to_transform, int data_dim, int n_data, double **new_space);
+int cluster_size(cluster_report rep, int cluster_id, int n_data);
+cluster_report run_K_means(double **data_to_transform, int n_data);
+void create_cidx_matrix(double **data, int n_data, cluster_report instance);
+double WithinClusterSS(double **data, cluster_report instance, int n_data);
+double BetweenClusterSS(double **data, cluster_report instance, int n_data);
+int WithinClusterPairs(cluster_report instance, int n_data);
+int BetweenClusterPairs(cluster_report instance, int n_data);
+double BetaCV(double **data, cluster_report instance, int n_data);
 double L2distance(double xc, double yc, double x1, double y1);
-void csv_out_info(double **data, string name, bool *incircle, kmeansreport report);
+void csv_out_info(double **data, int n_data, string name, bool *incircle, cluster_report report);
 
 int main() {
     cout << fixed;
     cout << setprecision(5);
 
+    int N_DIMS; //Number of dimensions
+    int N_DATA; //Number of observations
+
     //Define the structure to load the dataset
     double **data, *data_storage;
-    getDatasetDims(filename);
+    getDatasetDims(filename, &N_DIMS, &N_DATA);
 
     data_storage = (double *) malloc(N_DIMS * N_DATA * sizeof(double));
     if (data_storage == nullptr) {
@@ -72,7 +75,7 @@ int main() {
     }
 
     // Fill the structure from csv
-    loadData(filename, data);
+    loadData(filename, data, N_DIMS);
 
     cout << "Dataset Loaded" << endl;
 //    for (int i = 0; i < N_DIMS; ++i) {
@@ -85,12 +88,7 @@ int main() {
     auto start = chrono::steady_clock::now();
 
     //Standardization
-    for (int i = 0; i < N_DIMS; ++i) {
-        double mean = getMean(data[i]);
-        for(int j = 0; j < N_DATA; j++) {
-            data[i][j] = (data[i][j] - mean);
-        }
-    }
+    Standardize_dataset(data, N_DIMS, N_DATA);
 
     cout << "Dataset standardized" << endl;
 
@@ -114,7 +112,7 @@ int main() {
     for (int i = 0; i < N_DIMS; ++i) {
         pearson[i][i] = 1;
         for (int j = i+1; j < N_DIMS; ++j) {
-            double value = PearsonCoefficient(data[i], data[j]);
+            double value = PearsonCoefficient(data[i], data[j], N_DATA);
             pearson[i][j] = value;
             pearson[j][i] = value;
         }
@@ -217,7 +215,7 @@ int main() {
         newspace[i] = &newspace_storage[i*N_DATA];
     }
 
-    PCA_transform(corr, corr_vars, newspace);
+    PCA_transform(corr, corr_vars, N_DATA, newspace);
 
     free(corr);
     cout << "PCA computed on CORR subspace" << endl;
@@ -274,7 +272,7 @@ int main() {
         //Concatenate PC1_corr, PC2_corr and i-th dimension of uncorr
         memcpy(combine[2], data[uncorr[i]], N_DATA * sizeof(double));
 
-        PCA_transform(combine, 3, cs[i]);
+        PCA_transform(combine, 3, N_DATA, cs[i]);
         cout << "PCA computed on PC1_CORR, PC2_CORR and " << i+1 << "-th dimension of UNCORR" << endl;
     }
 
@@ -301,25 +299,25 @@ int main() {
     fill_n(incircle_storage, uncorr_vars * N_DATA, false);
 
     for (int i = 0; i < uncorr_vars; ++i) {
-        kmeansreport rep;
+        cluster_report rep;
         cout << "Candidate Subspace " << i+1 << ": ";
-        rep = Elbow_K_means(cs[i]); //Clustering through Elbow criterion on i-th candidate subspace
+        rep = run_K_means(cs[i], N_DATA); //Clustering through Elbow criterion on i-th candidate subspace
         for (int j = 0; j < rep.k; ++j) {
             int k = 0, previous_k = 0;
-            int cls_size = cluster_size(rep, j);
+            int cls_size = cluster_size(rep, j, N_DATA);
             while (k < PERCENTAGE_INCIRCLE * cls_size) {
                 double dist = 0.0;
                 int actual_cluster_size = 0;
                 for (int l = 0; l < N_DATA; ++l) {
                     if (rep.cidx[l] == j && !(incircle[i][l])) {
-                        dist += L2distance(rep.c[j][0], rep.c[j][1], cs[i][0][l], cs[i][1][l]);
+                        dist += L2distance(rep.centroids(0,j), rep.centroids(1,j), cs[i][0][l], cs[i][1][l]);
                         actual_cluster_size++;
                     }
                 }
                 double dist_mean = dist / actual_cluster_size;
                 for (int l = 0; l < N_DATA; ++l) {
                     if (rep.cidx[l] == j && !(incircle[i][l])) {
-                        if (L2distance(rep.c[j][0], rep.c[j][1], cs[i][0][l], cs[i][1][l]) <= dist_mean) {
+                        if (L2distance(rep.centroids(0,j), rep.centroids(1,j), cs[i][0][l], cs[i][1][l]) <= dist_mean) {
                             incircle[i][l] = true;
                             k++;
                         }
@@ -337,7 +335,7 @@ int main() {
             string fileoutname = "dataout";
             string num = to_string(i);
             string concat = fileoutname + num + ".csv";
-            csv_out_info(cs[i], concat, incircle[i], rep);
+            csv_out_info(cs[i], N_DATA, concat, incircle[i], rep);
         }
     }
 
@@ -382,7 +380,8 @@ int main() {
     return 0;
 }
 
-void getDatasetDims(string fname) {
+
+void getDatasetDims(string fname, int *dim, int *data) {
     int cols = 0;
     int rows = 0;
     ifstream file(fname);
@@ -401,13 +400,13 @@ void getDatasetDims(string fname) {
         }
         rows++;
     }
-    N_DIMS = cols;
-    N_DATA = rows;
-    cout << "Dataset: #DATA = " << N_DATA << " , #DIMENSIONS = " << N_DIMS << endl;
+    *dim = cols;
+    *data = rows;
+    cout << "Dataset: #DATA = " << *data << " , #DIMENSIONS = " << *dim << endl;
     file.close();
 }
 
-void loadData(string fname, double **array) {
+void loadData(string fname, double **array, int n_dims) {
     ifstream inputFile(fname);
     int row = 0;
     while (inputFile) {
@@ -416,7 +415,7 @@ void loadData(string fname, double **array) {
         if (s[0] != '#') {
             istringstream ss(s);
             while (ss) {
-                for (int i = 0; i < N_DIMS; i++) {
+                for (int i = 0; i < n_dims; i++) {
                     string line;
                     if (!getline(ss, line, ','))
                         break;
@@ -438,21 +437,31 @@ void loadData(string fname, double **array) {
     }
 }
 
-double getMean(double *arr) {
+double getMean(double *arr, int n_data) {
     double sum = 0.0;
 
-    for (int i = 0; i<N_DATA; i++) {
+    for (int i = 0; i<n_data; i++) {
         sum += arr[i];
     }
 
-    return sum/N_DATA;
+    return sum/n_data;
 }
 
-double PearsonCoefficient(double *X, double *Y) {
+void Standardize_dataset(double **data, int n_dims, int n_data) {
+
+    for (int i = 0; i < n_dims; ++i) {
+        double mean = getMean(data[i], n_data);
+        for(int j = 0; j < n_data; j++) {
+            data[i][j] = (data[i][j] - mean);
+        }
+    }
+}
+
+double PearsonCoefficient(double *X, double *Y, int n_data) {
     double sum_X = 0, sum_Y = 0, sum_XY = 0;
     double squareSum_X = 0, squareSum_Y = 0;
 
-    for (int i = 0; i < N_DATA; i++) {
+    for (int i = 0; i < n_data; i++) {
         sum_X += X[i];
         sum_Y += Y[i];
         sum_XY += X[i] * Y[i]; // sum of X[i] * Y[i]
@@ -460,25 +469,25 @@ double PearsonCoefficient(double *X, double *Y) {
         squareSum_Y += Y[i] * Y[i];
     }
 
-    double corr = (double)(N_DATA * sum_XY - sum_X * sum_Y)
-                  / sqrt((N_DATA * squareSum_X - sum_X * sum_X)
-                         * (N_DATA * squareSum_Y - sum_Y * sum_Y));
+    double corr = (double)(n_data * sum_XY - sum_X * sum_Y)
+                  / sqrt((n_data * squareSum_X - sum_X * sum_X)
+                         * (n_data * squareSum_Y - sum_Y * sum_Y));
     return corr;
 }
 
-void PCA_transform(double **data_to_transform, int data_dim, double **new_space) {
+void PCA_transform(double **data_to_transform, int data_dim, int n_data, double **new_space) {
     real_2d_array dset, basis;
     real_1d_array variances;
     variances.setlength(2);
-    dset.setlength(N_DATA, data_dim);
+    dset.setlength(n_data, data_dim);
     basis.setlength(data_dim, 2);
-    for (int i = 0; i < N_DATA; ++i) {
+    for (int i = 0; i < n_data; ++i) {
         for(int j = 0; j < data_dim; j++) {
             dset[i][j] = data_to_transform[j][i];
         }
     }
 
-    pcatruncatedsubspace(dset, N_DATA, data_dim, 2, 0.0, 0, variances, basis);
+    pcatruncatedsubspace(dset, n_data, data_dim, 2, 0.0, 0, variances, basis);
 
 //    cout << "PCA result: " << endl;
 //    for (int i = 0; i < data_dim; ++i) {
@@ -488,7 +497,7 @@ void PCA_transform(double **data_to_transform, int data_dim, double **new_space)
 //        cout << "\n";
 //    }
 
-    for (int i=0; i < N_DATA; i++) {
+    for (int i=0; i < n_data; i++) {
         for (int j=0;j<2;j++) {
             new_space[j][i]=0;
             for (int k=0;k<data_dim;k++) {
@@ -499,16 +508,16 @@ void PCA_transform(double **data_to_transform, int data_dim, double **new_space)
 
 //    cout << "The resulting subspace: " << endl;
 //    for(int j = 0; j < 2; j++) {
-//        for (int i = 0; i < N_DATA; ++i) {
+//        for (int i = 0; i < n_data; ++i) {
 //            cout << new_space[j][i] << " ";
 //        }
 //        cout << "\n";
 //    }
 }
 
-int cluster_size(kmeansreport rep, int cluster_id) {
+int cluster_size(cluster_report rep, int cluster_id, int n_data) {
     int occurrence = 0;
-    for (int i = 0; i < rep.npoints; ++i) {
+    for (int i = 0; i < n_data; ++i) {
         if (rep.cidx[i] == cluster_id) {
             occurrence++;
         }
@@ -516,157 +525,119 @@ int cluster_size(kmeansreport rep, int cluster_id) {
     return occurrence;
 }
 
-kmeansreport Elbow_K_means(double **data_to_transform) {
-    clusterizerstate status;
-    real_2d_array data;
-    kmeansreport final;
+cluster_report run_K_means(double **data_to_transform, int n_data) {
+    mat data(2, n_data);
+    mat final;
+    cluster_report final_rep, previous_rep;
+    previous_rep.cidx = (int *) malloc(n_data * sizeof(int));
+    final_rep.cidx = (int *) malloc(n_data * sizeof(int));
+    if (previous_rep.cidx == nullptr) {
+        cout << "Malloc error on cidx" << endl;
+        exit(-1);
+    }
 
-    data.setlength(N_DATA, 2);
-    for (int i = 0; i < N_DATA; ++i) {
-        for (int j = 0; j < 2; j++) {
-            data[i][j] = data_to_transform[j][i];
+    for (int j = 0; j < 2; j++) {
+        for (int i = 0; i < n_data; ++i) {
+            data(j,i) = data_to_transform[j][i];
         }
     }
 
-    kmeansreport previous;
-    double previous_score = 0.0;
     for (int j = 1; j <= K_MAX; ++j) {
-        clusterizercreate(status);
-        clusterizersetpoints(status, data, 2);
-        clusterizerrunkmeans(status, j, final);
-        if (final.terminationtype < 0) {
-            cout << "Error in KMeans run. Termination Type: " << final.terminationtype << endl;
+        bool status = kmeans(final, data, j, random_subset, 30, false);
+        if (!status) {
+            cout << "Error in KMeans run." << endl;
             exit(-1);
         }
 
-        //double avg_diameter = getAvgDiameter(data, final);
-        //double avg_radius = getAvgRadius(data, final);
-
         if (j == 1) {
-            previous = final;
+            previous_rep.centroids = final;
+            previous_rep.k = j;
+            previous_rep.BetaCV = 0.0;
+            fill_n(previous_rep.cidx, n_data, 0);
         } else {
-
-            //double ch = Calinski_Harabasz_index(data_to_transform, final);
-            //double pv = PercentageVariance(data_to_transform, final);
-            //double cv = BetaCV(data_to_transform, final);
-
-//            if (abs(previous_score - PercentageVariance(data_to_transform, final)) <= ELBOW_THRES) {
-            if (abs(previous_score - BetaCV(data_to_transform, final)) <= ELBOW_THRES) {
-                cout << "The optimal K is " << final.k << endl;
-                return final;
+            final_rep.centroids = final;
+            final_rep.k = j;
+            create_cidx_matrix(data_to_transform, n_data, final_rep);
+            final_rep.BetaCV = BetaCV(data_to_transform, final_rep, n_data);
+            if (abs(previous_rep.BetaCV - final_rep.BetaCV) <= ELBOW_THRES) {
+                cout << "The optimal K is " << final_rep.k << endl;
+                return final_rep;
             } else {
-                previous = final;
-                //previous_score = PercentageVariance(data_to_transform, final);
-                previous_score = BetaCV(data_to_transform, final);
+                previous_rep = final_rep;
             }
         }
     }
-    cout << "The optimal K is " << final.k << endl;
-    return final;
+    cout << "The optimal K is " << final_rep.k << endl;
+    return final_rep;
 }
 
-double getAvgDiameter(real_2d_array dataset, kmeansreport instance)
-{
-    real_2d_array dist_matrix;
-    dist_matrix.setlength(instance.npoints, instance.npoints);
-    clusterizergetdistances(dataset, instance.npoints, instance.nfeatures, 2, dist_matrix);
-    double tot_diameters = 0.0;
-    for (int i = 0; i < instance.k; ++i) {
-        double max = 0.0;
-        for (int l = 0; l < instance.npoints; ++l) {
-            if (instance.cidx[l] == i) {
-                for (int m = l+1; m < instance.npoints; ++m) {
-                    if (instance.cidx[m] == i && dist_matrix[l][m] > max) {
-                        max = dist_matrix[l][m];
-                    }
-                }
+void create_cidx_matrix(double **data, int n_data, cluster_report instance) {
+    for (int i = 0; i < n_data; ++i) {
+        double min_dist = L2distance(instance.centroids.at(0,0), instance.centroids.at(1,0), data[0][i], data[1][i]);
+        instance.cidx[i] = 0;
+        for (int j = 1; j < instance.k; ++j) {
+            double new_dist = L2distance(instance.centroids.at(0,j), instance.centroids.at(1,j), data[0][i], data[1][i]);
+            if (new_dist < min_dist) {
+                min_dist = new_dist;
+                instance.cidx[i] = j;
             }
         }
-        tot_diameters += max;
     }
-    return tot_diameters / instance.k;
 }
 
-double getAvgRadius(real_2d_array dataset, kmeansreport instance)
-{
-    double tot_radius = 0.0;
-    for (int i = 0; i < instance.k; ++i) {
-        double max = 0.0;
-        for (int l = 0; l < instance.npoints; ++l) {
-            double actual_radius = L2distance(instance.c[i][0], instance.c[i][1], dataset[l][0], dataset[l][1]);
-            if (instance.cidx[l] == i && actual_radius > max) {
-                max = actual_radius;
-            }
-        }
-        tot_radius += max;
+double WithinClusterSS(double **data, cluster_report instance, int n_data) {
+    double wss = 0.0;
+    for (int i = 0; i < n_data; ++i) {
+        int cluster_idx = instance.cidx[i];
+        wss += L2distance(instance.centroids.at(0,cluster_idx), instance.centroids.at(1,cluster_idx), data[0][i], data[1][i]);
     }
-    return tot_radius / instance.k;
+    return wss;
 }
 
-double Calinski_Harabasz_index(double **data, kmeansreport instance)
-{
-    double bss = BetweenClusterSS(data, instance);
-    double CH_index = 0.0;
-
-    CH_index = ((instance.npoints - instance.k) * bss) / ((instance.k - 1) * instance.energy);
-
-    return CH_index;
-}
-
-double PercentageVariance(double **data, kmeansreport instance)
-{
-    double bss = BetweenClusterSS(data, instance);
-    return (bss * 100) / (bss+instance.energy);
-}
-
-double BetweenClusterSS(double **data, kmeansreport instance)
-{
-    double pc1_mean = getMean(data[0]);
-    double pc2_mean = getMean(data[1]);
+double BetweenClusterSS(double **data, cluster_report instance, int n_data) {
+    double pc1_mean = getMean(data[0], n_data);
+    double pc2_mean = getMean(data[1], n_data);
     double bss = 0.0;
     for (int i = 0; i < instance.k; ++i) {
-        double n_points = cluster_size(instance, i);
-        bss += n_points * pow(L2distance(instance.c[i][0], instance.c[i][1], pc1_mean, pc2_mean), 2);
+        double n_points = cluster_size(instance, i, n_data);
+        bss += n_points * L2distance(instance.centroids.at(0, i), instance.centroids.at(1, i), pc1_mean, pc2_mean);
     }
 
     return bss;
 }
 
-int WithinClusterPairs(kmeansreport instance)
-{
+int WithinClusterPairs(cluster_report instance, int n_data) {
     int counter = 0;
     for (int i = 0; i < instance.k; ++i) {
-        int n_points = cluster_size(instance, i);
+        int n_points = cluster_size(instance, i, n_data);
         counter += (n_points - 1) * n_points;
     }
     return counter/2;
 }
 
-int BetweenClusterPairs(kmeansreport instance)
-{
+int BetweenClusterPairs(cluster_report instance, int n_data) {
     int counter = 0;
     for (int i = 0; i < instance.k; ++i) {
-        int n_points = cluster_size(instance, i);
+        int n_points = cluster_size(instance, i, n_data);
         for (int j = 0; j < instance.k; ++j) {
             if (i != j) {
-                counter += n_points * cluster_size(instance, j);
+                counter += n_points * cluster_size(instance, j, n_data);
             }
         }
     }
     return counter/2;
 }
 
-double BetaCV(double **data, kmeansreport instance)
-{
-    double bss = BetweenClusterSS(data, instance);
-    int N_in = WithinClusterPairs(instance);
-    int N_out = BetweenClusterPairs(instance);
+double BetaCV(double **data, cluster_report instance, int n_data) {
+    double bss = BetweenClusterSS(data, instance, n_data);
+    double wss = WithinClusterSS(data, instance, n_data);
+    int N_in = WithinClusterPairs(instance, n_data);
+    int N_out = BetweenClusterPairs(instance, n_data);
 
-    return ((double) N_out / N_in) * (instance.energy / bss);
+    return ((double) N_out / N_in) * (wss / bss);
 }
 
-double L2distance(double xc, double yc, double x1, double y1)
-{
+double L2distance(double xc, double yc, double x1, double y1) {
     double x = xc - x1; //calculating number to square in next step
     double y = yc - y1;
     double dist;
@@ -677,11 +648,11 @@ double L2distance(double xc, double yc, double x1, double y1)
     return dist;
 }
 
-void csv_out_info(double **data, string name, bool *incircle, kmeansreport report) {
+void csv_out_info(double **data, int n_data, string name, bool *incircle, cluster_report report) {
     fstream fout;
     fout.open(outdir + name, ios::out | ios::trunc);
 
-    for (int i = 0; i < N_DATA; ++i) {
+    for (int i = 0; i < n_data; ++i) {
         for (int j = 0; j < 2; ++j) {
             fout << data[j][i] << ",";
         }
@@ -698,10 +669,8 @@ void csv_out_info(double **data, string name, bool *incircle, kmeansreport repor
     fstream fout2;
     fout2.open(outdir + "centroids_" + name, ios::out | ios::trunc);
     for (int i = 0; i < report.k; ++i) {
-        for (int j = 0; j < 2; ++j) {
-            fout2 << report.c[i][j] << ",";
-        }
-        fout2 << "\n";
+        fout2 << report.centroids.at(0, i) << ",";
+        fout2 << report.centroids.at(1, i) << "\n";
     }
     fout2.close();
 }
