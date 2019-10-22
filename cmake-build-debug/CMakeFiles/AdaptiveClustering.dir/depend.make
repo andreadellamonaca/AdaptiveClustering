@@ -67,14 +67,14 @@ CMakeFiles/AdaptiveClustering.dir/alglib/statistics.cpp.o: ../alglib/statistics.
 CMakeFiles/AdaptiveClustering.dir/alglib/statistics.cpp.o: ../alglib/statistics.h
 CMakeFiles/AdaptiveClustering.dir/alglib/statistics.cpp.o: ../alglib/stdafx.h
 
-CMakeFiles/AdaptiveClustering.dir/main2.cpp.o: ../alglib/alglibinternal.h
-CMakeFiles/AdaptiveClustering.dir/main2.cpp.o: ../alglib/alglibmisc.h
-CMakeFiles/AdaptiveClustering.dir/main2.cpp.o: ../alglib/ap.h
-CMakeFiles/AdaptiveClustering.dir/main2.cpp.o: ../alglib/dataanalysis.h
-CMakeFiles/AdaptiveClustering.dir/main2.cpp.o: ../alglib/linalg.h
-CMakeFiles/AdaptiveClustering.dir/main2.cpp.o: ../alglib/optimization.h
-CMakeFiles/AdaptiveClustering.dir/main2.cpp.o: ../alglib/solvers.h
-CMakeFiles/AdaptiveClustering.dir/main2.cpp.o: ../alglib/specialfunctions.h
-CMakeFiles/AdaptiveClustering.dir/main2.cpp.o: ../alglib/statistics.h
-CMakeFiles/AdaptiveClustering.dir/main2.cpp.o: ../main2.cpp
+CMakeFiles/AdaptiveClustering.dir/main.cpp.o: ../alglib/alglibinternal.h
+CMakeFiles/AdaptiveClustering.dir/main.cpp.o: ../alglib/alglibmisc.h
+CMakeFiles/AdaptiveClustering.dir/main.cpp.o: ../alglib/ap.h
+CMakeFiles/AdaptiveClustering.dir/main.cpp.o: ../alglib/dataanalysis.h
+CMakeFiles/AdaptiveClustering.dir/main.cpp.o: ../alglib/linalg.h
+CMakeFiles/AdaptiveClustering.dir/main.cpp.o: ../alglib/optimization.h
+CMakeFiles/AdaptiveClustering.dir/main.cpp.o: ../alglib/solvers.h
+CMakeFiles/AdaptiveClustering.dir/main.cpp.o: ../alglib/specialfunctions.h
+CMakeFiles/AdaptiveClustering.dir/main.cpp.o: ../alglib/statistics.h
+CMakeFiles/AdaptiveClustering.dir/main.cpp.o: ../main.cpp
 

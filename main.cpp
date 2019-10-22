@@ -22,7 +22,7 @@ string filename = "../Iris.csv";
 //string filename = "../Absenteeism_at_work.csv";
 
 bool save_output = false; //Flag for csv output generation
-string outdir = "../plot/dim032/";
+string outdir = "../plot/iris/";
 
 typedef struct cluster_report {
     mat centroids;
@@ -78,12 +78,12 @@ int main() {
     loadData(filename, data, N_DIMS);
 
     cout << "Dataset Loaded" << endl;
-//    for (int i = 0; i < N_DIMS; ++i) {
-//        for(int j = 0; j < N_DATA; j++) {
-//            cout << data[i][j] << " ";
-//        }
-//       cout << "\n";
-//    }
+/*    for (int i = 0; i < N_DIMS; ++i) {
+        for(int j = 0; j < N_DATA; j++) {
+            cout << data[i][j] << " ";
+        }
+       cout << "\n";
+    }*/
 
     auto start = chrono::steady_clock::now();
 
@@ -119,12 +119,12 @@ int main() {
     }
 
     cout << "Pearson Correlation Coefficient computed" << endl;
-//    for (int i = 0; i < N_DIMS; ++i) {
-//        for(int j = 0; j < N_DIMS; j++) {
-//            cout << pearson[i][j] << " ";
-//        }
-//        cout << "\n";
-//    }
+    for (int i = 0; i < N_DIMS; ++i) {
+        for(int j = 0; j < N_DIMS; j++) {
+            cout << pearson[i][j] << " ";
+        }
+        cout << "\n";
+    }
 
     //Dimensions partitioned in CORR and UNCORR, then CORR U UNCORR = DIMS
     int corr_vars = 0, uncorr_vars = 0;
@@ -276,6 +276,7 @@ int main() {
         cout << "PCA computed on PC1_CORR, PC2_CORR and " << i+1 << "-th dimension of UNCORR" << endl;
     }
 
+    free(uncorr);
     free(combine_storage);
     free(combine);
 
@@ -458,20 +459,21 @@ void Standardize_dataset(double **data, int n_dims, int n_data) {
 }
 
 double PearsonCoefficient(double *X, double *Y, int n_data) {
-    double sum_X = 0, sum_Y = 0, sum_XY = 0;
-    double squareSum_X = 0, squareSum_Y = 0;
+    //double sum_X = 0, sum_Y = 0;
+    double sum_XY = 0, squareSum_X = 0, squareSum_Y = 0;
 
     for (int i = 0; i < n_data; i++) {
-        sum_X += X[i];
-        sum_Y += Y[i];
+        //sum_X += X[i];
+        //sum_Y += Y[i];
         sum_XY += X[i] * Y[i]; // sum of X[i] * Y[i]
         squareSum_X += X[i] * X[i]; // sum of square of array elements
         squareSum_Y += Y[i] * Y[i];
     }
 
-    double corr = (double)(n_data * sum_XY - sum_X * sum_Y)
+    double corr = (double)sum_XY / sqrt(squareSum_X * squareSum_Y);
+    /*double corr = (double)(n_data * sum_XY - sum_X * sum_Y)
                   / sqrt((n_data * squareSum_X - sum_X * sum_X)
-                         * (n_data * squareSum_Y - sum_Y * sum_Y));
+                         * (n_data * squareSum_Y - sum_Y * sum_Y));*/
     return corr;
 }
 
