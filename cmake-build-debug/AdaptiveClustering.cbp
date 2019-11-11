@@ -84,58 +84,10 @@
 				</MakeCommands>
 			</Target>
 		</Build>
-		<Unit filename="/home/andrea/Scrivania/AdaptiveClustering/alglib/alglibinternal.cpp">
+		<Unit filename="/home/andrea/Scrivania/AdaptiveClustering/adaptive_clustering.cpp">
 			<Option target="AdaptiveClustering"/>
 		</Unit>
-		<Unit filename="/home/andrea/Scrivania/AdaptiveClustering/alglib/alglibinternal.h">
-			<Option target="AdaptiveClustering"/>
-		</Unit>
-		<Unit filename="/home/andrea/Scrivania/AdaptiveClustering/alglib/alglibmisc.cpp">
-			<Option target="AdaptiveClustering"/>
-		</Unit>
-		<Unit filename="/home/andrea/Scrivania/AdaptiveClustering/alglib/alglibmisc.h">
-			<Option target="AdaptiveClustering"/>
-		</Unit>
-		<Unit filename="/home/andrea/Scrivania/AdaptiveClustering/alglib/ap.cpp">
-			<Option target="AdaptiveClustering"/>
-		</Unit>
-		<Unit filename="/home/andrea/Scrivania/AdaptiveClustering/alglib/ap.h">
-			<Option target="AdaptiveClustering"/>
-		</Unit>
-		<Unit filename="/home/andrea/Scrivania/AdaptiveClustering/alglib/dataanalysis.cpp">
-			<Option target="AdaptiveClustering"/>
-		</Unit>
-		<Unit filename="/home/andrea/Scrivania/AdaptiveClustering/alglib/dataanalysis.h">
-			<Option target="AdaptiveClustering"/>
-		</Unit>
-		<Unit filename="/home/andrea/Scrivania/AdaptiveClustering/alglib/linalg.cpp">
-			<Option target="AdaptiveClustering"/>
-		</Unit>
-		<Unit filename="/home/andrea/Scrivania/AdaptiveClustering/alglib/linalg.h">
-			<Option target="AdaptiveClustering"/>
-		</Unit>
-		<Unit filename="/home/andrea/Scrivania/AdaptiveClustering/alglib/optimization.cpp">
-			<Option target="AdaptiveClustering"/>
-		</Unit>
-		<Unit filename="/home/andrea/Scrivania/AdaptiveClustering/alglib/optimization.h">
-			<Option target="AdaptiveClustering"/>
-		</Unit>
-		<Unit filename="/home/andrea/Scrivania/AdaptiveClustering/alglib/solvers.cpp">
-			<Option target="AdaptiveClustering"/>
-		</Unit>
-		<Unit filename="/home/andrea/Scrivania/AdaptiveClustering/alglib/solvers.h">
-			<Option target="AdaptiveClustering"/>
-		</Unit>
-		<Unit filename="/home/andrea/Scrivania/AdaptiveClustering/alglib/specialfunctions.cpp">
-			<Option target="AdaptiveClustering"/>
-		</Unit>
-		<Unit filename="/home/andrea/Scrivania/AdaptiveClustering/alglib/specialfunctions.h">
-			<Option target="AdaptiveClustering"/>
-		</Unit>
-		<Unit filename="/home/andrea/Scrivania/AdaptiveClustering/alglib/statistics.cpp">
-			<Option target="AdaptiveClustering"/>
-		</Unit>
-		<Unit filename="/home/andrea/Scrivania/AdaptiveClustering/alglib/statistics.h">
+		<Unit filename="/home/andrea/Scrivania/AdaptiveClustering/adaptive_clustering.h">
 			<Option target="AdaptiveClustering"/>
 		</Unit>
 		<Unit filename="/home/andrea/Scrivania/AdaptiveClustering/main.cpp">

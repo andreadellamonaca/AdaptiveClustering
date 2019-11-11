@@ -70,153 +70,33 @@ CMakeFiles/AdaptiveClustering.dir/main.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/AdaptiveClustering.dir/main.cpp.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/andrea/Scrivania/AdaptiveClustering/main.cpp -o CMakeFiles/AdaptiveClustering.dir/main.cpp.s
 
-CMakeFiles/AdaptiveClustering.dir/alglib/alglibinternal.cpp.o: CMakeFiles/AdaptiveClustering.dir/flags.make
-CMakeFiles/AdaptiveClustering.dir/alglib/alglibinternal.cpp.o: ../alglib/alglibinternal.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/andrea/Scrivania/AdaptiveClustering/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/AdaptiveClustering.dir/alglib/alglibinternal.cpp.o"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/AdaptiveClustering.dir/alglib/alglibinternal.cpp.o -c /home/andrea/Scrivania/AdaptiveClustering/alglib/alglibinternal.cpp
+CMakeFiles/AdaptiveClustering.dir/adaptive_clustering.cpp.o: CMakeFiles/AdaptiveClustering.dir/flags.make
+CMakeFiles/AdaptiveClustering.dir/adaptive_clustering.cpp.o: ../adaptive_clustering.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/andrea/Scrivania/AdaptiveClustering/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/AdaptiveClustering.dir/adaptive_clustering.cpp.o"
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/AdaptiveClustering.dir/adaptive_clustering.cpp.o -c /home/andrea/Scrivania/AdaptiveClustering/adaptive_clustering.cpp
 
-CMakeFiles/AdaptiveClustering.dir/alglib/alglibinternal.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/AdaptiveClustering.dir/alglib/alglibinternal.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/andrea/Scrivania/AdaptiveClustering/alglib/alglibinternal.cpp > CMakeFiles/AdaptiveClustering.dir/alglib/alglibinternal.cpp.i
+CMakeFiles/AdaptiveClustering.dir/adaptive_clustering.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/AdaptiveClustering.dir/adaptive_clustering.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/andrea/Scrivania/AdaptiveClustering/adaptive_clustering.cpp > CMakeFiles/AdaptiveClustering.dir/adaptive_clustering.cpp.i
 
-CMakeFiles/AdaptiveClustering.dir/alglib/alglibinternal.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/AdaptiveClustering.dir/alglib/alglibinternal.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/andrea/Scrivania/AdaptiveClustering/alglib/alglibinternal.cpp -o CMakeFiles/AdaptiveClustering.dir/alglib/alglibinternal.cpp.s
-
-CMakeFiles/AdaptiveClustering.dir/alglib/alglibmisc.cpp.o: CMakeFiles/AdaptiveClustering.dir/flags.make
-CMakeFiles/AdaptiveClustering.dir/alglib/alglibmisc.cpp.o: ../alglib/alglibmisc.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/andrea/Scrivania/AdaptiveClustering/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/AdaptiveClustering.dir/alglib/alglibmisc.cpp.o"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/AdaptiveClustering.dir/alglib/alglibmisc.cpp.o -c /home/andrea/Scrivania/AdaptiveClustering/alglib/alglibmisc.cpp
-
-CMakeFiles/AdaptiveClustering.dir/alglib/alglibmisc.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/AdaptiveClustering.dir/alglib/alglibmisc.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/andrea/Scrivania/AdaptiveClustering/alglib/alglibmisc.cpp > CMakeFiles/AdaptiveClustering.dir/alglib/alglibmisc.cpp.i
-
-CMakeFiles/AdaptiveClustering.dir/alglib/alglibmisc.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/AdaptiveClustering.dir/alglib/alglibmisc.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/andrea/Scrivania/AdaptiveClustering/alglib/alglibmisc.cpp -o CMakeFiles/AdaptiveClustering.dir/alglib/alglibmisc.cpp.s
-
-CMakeFiles/AdaptiveClustering.dir/alglib/ap.cpp.o: CMakeFiles/AdaptiveClustering.dir/flags.make
-CMakeFiles/AdaptiveClustering.dir/alglib/ap.cpp.o: ../alglib/ap.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/andrea/Scrivania/AdaptiveClustering/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/AdaptiveClustering.dir/alglib/ap.cpp.o"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/AdaptiveClustering.dir/alglib/ap.cpp.o -c /home/andrea/Scrivania/AdaptiveClustering/alglib/ap.cpp
-
-CMakeFiles/AdaptiveClustering.dir/alglib/ap.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/AdaptiveClustering.dir/alglib/ap.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/andrea/Scrivania/AdaptiveClustering/alglib/ap.cpp > CMakeFiles/AdaptiveClustering.dir/alglib/ap.cpp.i
-
-CMakeFiles/AdaptiveClustering.dir/alglib/ap.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/AdaptiveClustering.dir/alglib/ap.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/andrea/Scrivania/AdaptiveClustering/alglib/ap.cpp -o CMakeFiles/AdaptiveClustering.dir/alglib/ap.cpp.s
-
-CMakeFiles/AdaptiveClustering.dir/alglib/dataanalysis.cpp.o: CMakeFiles/AdaptiveClustering.dir/flags.make
-CMakeFiles/AdaptiveClustering.dir/alglib/dataanalysis.cpp.o: ../alglib/dataanalysis.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/andrea/Scrivania/AdaptiveClustering/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/AdaptiveClustering.dir/alglib/dataanalysis.cpp.o"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/AdaptiveClustering.dir/alglib/dataanalysis.cpp.o -c /home/andrea/Scrivania/AdaptiveClustering/alglib/dataanalysis.cpp
-
-CMakeFiles/AdaptiveClustering.dir/alglib/dataanalysis.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/AdaptiveClustering.dir/alglib/dataanalysis.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/andrea/Scrivania/AdaptiveClustering/alglib/dataanalysis.cpp > CMakeFiles/AdaptiveClustering.dir/alglib/dataanalysis.cpp.i
-
-CMakeFiles/AdaptiveClustering.dir/alglib/dataanalysis.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/AdaptiveClustering.dir/alglib/dataanalysis.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/andrea/Scrivania/AdaptiveClustering/alglib/dataanalysis.cpp -o CMakeFiles/AdaptiveClustering.dir/alglib/dataanalysis.cpp.s
-
-CMakeFiles/AdaptiveClustering.dir/alglib/linalg.cpp.o: CMakeFiles/AdaptiveClustering.dir/flags.make
-CMakeFiles/AdaptiveClustering.dir/alglib/linalg.cpp.o: ../alglib/linalg.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/andrea/Scrivania/AdaptiveClustering/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/AdaptiveClustering.dir/alglib/linalg.cpp.o"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/AdaptiveClustering.dir/alglib/linalg.cpp.o -c /home/andrea/Scrivania/AdaptiveClustering/alglib/linalg.cpp
-
-CMakeFiles/AdaptiveClustering.dir/alglib/linalg.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/AdaptiveClustering.dir/alglib/linalg.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/andrea/Scrivania/AdaptiveClustering/alglib/linalg.cpp > CMakeFiles/AdaptiveClustering.dir/alglib/linalg.cpp.i
-
-CMakeFiles/AdaptiveClustering.dir/alglib/linalg.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/AdaptiveClustering.dir/alglib/linalg.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/andrea/Scrivania/AdaptiveClustering/alglib/linalg.cpp -o CMakeFiles/AdaptiveClustering.dir/alglib/linalg.cpp.s
-
-CMakeFiles/AdaptiveClustering.dir/alglib/optimization.cpp.o: CMakeFiles/AdaptiveClustering.dir/flags.make
-CMakeFiles/AdaptiveClustering.dir/alglib/optimization.cpp.o: ../alglib/optimization.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/andrea/Scrivania/AdaptiveClustering/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/AdaptiveClustering.dir/alglib/optimization.cpp.o"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/AdaptiveClustering.dir/alglib/optimization.cpp.o -c /home/andrea/Scrivania/AdaptiveClustering/alglib/optimization.cpp
-
-CMakeFiles/AdaptiveClustering.dir/alglib/optimization.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/AdaptiveClustering.dir/alglib/optimization.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/andrea/Scrivania/AdaptiveClustering/alglib/optimization.cpp > CMakeFiles/AdaptiveClustering.dir/alglib/optimization.cpp.i
-
-CMakeFiles/AdaptiveClustering.dir/alglib/optimization.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/AdaptiveClustering.dir/alglib/optimization.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/andrea/Scrivania/AdaptiveClustering/alglib/optimization.cpp -o CMakeFiles/AdaptiveClustering.dir/alglib/optimization.cpp.s
-
-CMakeFiles/AdaptiveClustering.dir/alglib/solvers.cpp.o: CMakeFiles/AdaptiveClustering.dir/flags.make
-CMakeFiles/AdaptiveClustering.dir/alglib/solvers.cpp.o: ../alglib/solvers.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/andrea/Scrivania/AdaptiveClustering/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/AdaptiveClustering.dir/alglib/solvers.cpp.o"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/AdaptiveClustering.dir/alglib/solvers.cpp.o -c /home/andrea/Scrivania/AdaptiveClustering/alglib/solvers.cpp
-
-CMakeFiles/AdaptiveClustering.dir/alglib/solvers.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/AdaptiveClustering.dir/alglib/solvers.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/andrea/Scrivania/AdaptiveClustering/alglib/solvers.cpp > CMakeFiles/AdaptiveClustering.dir/alglib/solvers.cpp.i
-
-CMakeFiles/AdaptiveClustering.dir/alglib/solvers.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/AdaptiveClustering.dir/alglib/solvers.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/andrea/Scrivania/AdaptiveClustering/alglib/solvers.cpp -o CMakeFiles/AdaptiveClustering.dir/alglib/solvers.cpp.s
-
-CMakeFiles/AdaptiveClustering.dir/alglib/specialfunctions.cpp.o: CMakeFiles/AdaptiveClustering.dir/flags.make
-CMakeFiles/AdaptiveClustering.dir/alglib/specialfunctions.cpp.o: ../alglib/specialfunctions.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/andrea/Scrivania/AdaptiveClustering/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/AdaptiveClustering.dir/alglib/specialfunctions.cpp.o"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/AdaptiveClustering.dir/alglib/specialfunctions.cpp.o -c /home/andrea/Scrivania/AdaptiveClustering/alglib/specialfunctions.cpp
-
-CMakeFiles/AdaptiveClustering.dir/alglib/specialfunctions.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/AdaptiveClustering.dir/alglib/specialfunctions.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/andrea/Scrivania/AdaptiveClustering/alglib/specialfunctions.cpp > CMakeFiles/AdaptiveClustering.dir/alglib/specialfunctions.cpp.i
-
-CMakeFiles/AdaptiveClustering.dir/alglib/specialfunctions.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/AdaptiveClustering.dir/alglib/specialfunctions.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/andrea/Scrivania/AdaptiveClustering/alglib/specialfunctions.cpp -o CMakeFiles/AdaptiveClustering.dir/alglib/specialfunctions.cpp.s
-
-CMakeFiles/AdaptiveClustering.dir/alglib/statistics.cpp.o: CMakeFiles/AdaptiveClustering.dir/flags.make
-CMakeFiles/AdaptiveClustering.dir/alglib/statistics.cpp.o: ../alglib/statistics.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/andrea/Scrivania/AdaptiveClustering/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building CXX object CMakeFiles/AdaptiveClustering.dir/alglib/statistics.cpp.o"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/AdaptiveClustering.dir/alglib/statistics.cpp.o -c /home/andrea/Scrivania/AdaptiveClustering/alglib/statistics.cpp
-
-CMakeFiles/AdaptiveClustering.dir/alglib/statistics.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/AdaptiveClustering.dir/alglib/statistics.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/andrea/Scrivania/AdaptiveClustering/alglib/statistics.cpp > CMakeFiles/AdaptiveClustering.dir/alglib/statistics.cpp.i
-
-CMakeFiles/AdaptiveClustering.dir/alglib/statistics.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/AdaptiveClustering.dir/alglib/statistics.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/andrea/Scrivania/AdaptiveClustering/alglib/statistics.cpp -o CMakeFiles/AdaptiveClustering.dir/alglib/statistics.cpp.s
+CMakeFiles/AdaptiveClustering.dir/adaptive_clustering.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/AdaptiveClustering.dir/adaptive_clustering.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/andrea/Scrivania/AdaptiveClustering/adaptive_clustering.cpp -o CMakeFiles/AdaptiveClustering.dir/adaptive_clustering.cpp.s
 
 # Object files for target AdaptiveClustering
 AdaptiveClustering_OBJECTS = \
 "CMakeFiles/AdaptiveClustering.dir/main.cpp.o" \
-"CMakeFiles/AdaptiveClustering.dir/alglib/alglibinternal.cpp.o" \
-"CMakeFiles/AdaptiveClustering.dir/alglib/alglibmisc.cpp.o" \
-"CMakeFiles/AdaptiveClustering.dir/alglib/ap.cpp.o" \
-"CMakeFiles/AdaptiveClustering.dir/alglib/dataanalysis.cpp.o" \
-"CMakeFiles/AdaptiveClustering.dir/alglib/linalg.cpp.o" \
-"CMakeFiles/AdaptiveClustering.dir/alglib/optimization.cpp.o" \
-"CMakeFiles/AdaptiveClustering.dir/alglib/solvers.cpp.o" \
-"CMakeFiles/AdaptiveClustering.dir/alglib/specialfunctions.cpp.o" \
-"CMakeFiles/AdaptiveClustering.dir/alglib/statistics.cpp.o"
+"CMakeFiles/AdaptiveClustering.dir/adaptive_clustering.cpp.o"
 
 # External object files for target AdaptiveClustering
 AdaptiveClustering_EXTERNAL_OBJECTS =
 
 AdaptiveClustering: CMakeFiles/AdaptiveClustering.dir/main.cpp.o
-AdaptiveClustering: CMakeFiles/AdaptiveClustering.dir/alglib/alglibinternal.cpp.o
-AdaptiveClustering: CMakeFiles/AdaptiveClustering.dir/alglib/alglibmisc.cpp.o
-AdaptiveClustering: CMakeFiles/AdaptiveClustering.dir/alglib/ap.cpp.o
-AdaptiveClustering: CMakeFiles/AdaptiveClustering.dir/alglib/dataanalysis.cpp.o
-AdaptiveClustering: CMakeFiles/AdaptiveClustering.dir/alglib/linalg.cpp.o
-AdaptiveClustering: CMakeFiles/AdaptiveClustering.dir/alglib/optimization.cpp.o
-AdaptiveClustering: CMakeFiles/AdaptiveClustering.dir/alglib/solvers.cpp.o
-AdaptiveClustering: CMakeFiles/AdaptiveClustering.dir/alglib/specialfunctions.cpp.o
-AdaptiveClustering: CMakeFiles/AdaptiveClustering.dir/alglib/statistics.cpp.o
+AdaptiveClustering: CMakeFiles/AdaptiveClustering.dir/adaptive_clustering.cpp.o
 AdaptiveClustering: CMakeFiles/AdaptiveClustering.dir/build.make
 AdaptiveClustering: /usr/lib/x86_64-linux-gnu/libarmadillo.so
 AdaptiveClustering: CMakeFiles/AdaptiveClustering.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/andrea/Scrivania/AdaptiveClustering/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Linking CXX executable AdaptiveClustering"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/andrea/Scrivania/AdaptiveClustering/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Linking CXX executable AdaptiveClustering"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/AdaptiveClustering.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

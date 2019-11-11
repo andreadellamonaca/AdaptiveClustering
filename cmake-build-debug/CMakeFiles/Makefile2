@@ -74,12 +74,12 @@ preinstall:
 CMakeFiles/AdaptiveClustering.dir/all:
 	$(MAKE) -f CMakeFiles/AdaptiveClustering.dir/build.make CMakeFiles/AdaptiveClustering.dir/depend
 	$(MAKE) -f CMakeFiles/AdaptiveClustering.dir/build.make CMakeFiles/AdaptiveClustering.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/andrea/Scrivania/AdaptiveClustering/cmake-build-debug/CMakeFiles --progress-num=1,2,3,4,5,6,7,8,9,10,11 "Built target AdaptiveClustering"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/andrea/Scrivania/AdaptiveClustering/cmake-build-debug/CMakeFiles --progress-num=1,2,3 "Built target AdaptiveClustering"
 .PHONY : CMakeFiles/AdaptiveClustering.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/AdaptiveClustering.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/andrea/Scrivania/AdaptiveClustering/cmake-build-debug/CMakeFiles 11
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/andrea/Scrivania/AdaptiveClustering/cmake-build-debug/CMakeFiles 3
 	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/AdaptiveClustering.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/andrea/Scrivania/AdaptiveClustering/cmake-build-debug/CMakeFiles 0
 .PHONY : CMakeFiles/AdaptiveClustering.dir/rule

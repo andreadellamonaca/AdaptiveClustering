@@ -4,107 +4,172 @@
 #include <iomanip>
 #include <chrono>
 #include <algorithm>
-#include "alglib/dataanalysis.h"
-#include <armadillo>
+#include "adaptive_clustering.h"
 
-using namespace std;
-using namespace alglib;
-using namespace arma;
+/**
+ * @file main.cpp
+ */
 
-#define K_MAX 10 //Max number of clusters for Elbow criterion
-#define ELBOW_THRES 0.25 //BetaCV Threshold for Elbow criterion
-#define PERCENTAGE_INCIRCLE 0.90 //Percentage of points within the circle
-#define PERCENTAGE_SUBSPACES 0.80 //Percentage of subspaces for outliers occurrences evaluation
+/**
+ * @struct Params
+ * A structure containing parameters read from command-line.
+ */
+struct Params {
+    string       inputFilename; /**< The path for the input CSV file. */
+    string       outputFilename; /**< The path for the output file. */
+    long         k_max; /**< The maximum number of cluster to try for the K-Means algorithm. */
+    double       elbowThreshold; /**< The error tolerance for the selected metric to evaluate the elbow in K-means algorithm. */
+    double       percentageIncircle; /**< The percentage of points in a cluster to be considered as inliers. */
+    double       percentageSubspaces; /**< The percentage of subspace in which a point must be evaluated as outlier to be
+ *                                          selected as general outlier. */
+};
 
-string filename = "../Iris.csv";
-//string filename = "../HTRU_2.csv";
-//string filename = "../dataset_benchmark/dim032.csv";
-//string filename = "../Absenteeism_at_work.csv";
+/**
+ * Print the needed parameters in order to run the script
+ * @param cmd The name of the script.
+ */
+void usage(char* cmd);
 
-bool save_output = false; //Flag for csv output generation
-string outdir = "../plot/iris/";
-
-typedef struct cluster_report {
-    mat centroids;
-    int k;
-    double BetaCV;
-    int *cidx;
-} cluster_report;
-
-void getDatasetDims(string fname, int *dim, int *data);
-void loadData(string fname, double **array, int n_dims);
-double getMean(double *arr, int n_data);
-void Standardize_dataset(double **data, int n_dims, int n_data);
-double PearsonCoefficient(double *X, double *Y, int n_data);
-void PCA_transform(double **data_to_transform, int data_dim, int n_data, double **new_space);
-int cluster_size(cluster_report rep, int cluster_id, int n_data);
-cluster_report run_K_means(double **data_to_transform, int n_data);
-void create_cidx_matrix(double **data, int n_data, cluster_report instance);
-double WithinClusterSS(double **data, cluster_report instance, int n_data);
-double BetweenClusterSS(double **data, cluster_report instance, int n_data);
-int WithinClusterPairs(cluster_report instance, int n_data);
-int BetweenClusterPairs(cluster_report instance, int n_data);
-double BetaCV(double **data, cluster_report instance, int n_data);
-double L2distance(double xc, double yc, double x1, double y1);
-void csv_out_info(double **data, int n_data, string name, bool *incircle, cluster_report report);
-
-int main() {
+int main(int argc, char **argv) {
     cout << fixed;
     cout << setprecision(5);
 
     int N_DIMS; //Number of dimensions
     int N_DATA; //Number of observations
+    long k_max = 10; // max number of clusters to try in elbow criterion
+    double elbowThreshold = 0.25; // threshold for the selection of optimal number of clusters in Elbow method
+    double percentageIncircle = 0.9; // percentage of points in a cluster to be evaluated as inlier
+    double percentageSubspaces = 0.8; // percentage of subspaces in which a point must be outlier to be evaluated as general outlier
+    string inFile = "../dataset/Iris.csv";
+    //string inFile = "../dataset/HTRU_2.csv";
+    //string inFile = "../dataset/dim032.csv";
+    //string inFile = "../dataset/Absenteeism_at_work.csv";
+    string outFile;
+    //outFile = "../plot/iris/";
+    bool outputOnFile = false; //Flag for csv output generation
+    Params params;
 
-    //Define the structure to load the dataset
+    /*** Parse Command-Line Parameters ***/
+    for (int i = 1; i < argc; ++i) {
+        if (strcmp(argv[i], "-of") == 0) {
+            i++;
+            if (i >= argc) {
+                cerr << "Missing filename for simulation output." << endl;
+                return -1;
+            }
+            outFile = string(argv[i]);
+        } else if (strcmp(argv[i], "-k") == 0) {
+            i++;
+            if (i >= argc) {
+                cerr << "Missing max number of clusters for Elbow method.\n";
+                return -1;
+            }
+            k_max = stol(argv[i]);
+        } else if (strcmp(argv[i], "-et") == 0) {
+            i++;
+            if (i >= argc) {
+                cerr << "Missing threshold for Elbow method.\n";
+                return -1;
+            }
+            elbowThreshold = stof(argv[i]);
+        } else if (strcmp(argv[i], "-pi") == 0) {
+            i++;
+            if (i >= argc) {
+                cerr << "Missing number of percentage of inlier points.\n";
+                return -1;
+            }
+            percentageIncircle = stof(argv[i]);
+        } else if (strcmp(argv[i], "-pspace") == 0) {
+            i++;
+            if (i >= argc) {
+                cerr << "Missing number of percentage of subspace in which an outlier must be.\n";
+                return -1;
+            }
+            percentageSubspaces = stof(argv[i]);
+        } else if (strcmp(argv[i], "-if") == 0) {
+            i++;
+            if (i >= argc) {
+                cerr << "Missing input file name.\n";
+                return -1;
+            }
+            inFile = string(argv[i]);
+        } else {
+            usage(argv[0]);
+            return -1;
+        }
+    }
+
+    /*** Assign parameters read from command line ***/
+    params.outputFilename = outFile;
+    params.elbowThreshold = elbowThreshold;
+    params.k_max = k_max;
+    params.percentageIncircle = percentageIncircle;
+    params.percentageSubspaces = percentageSubspaces;
+    params.inputFilename = inFile;
+
+    outputOnFile = params.outputFilename.size() > 0;
+
+    cout << endl << "PARAMETERS:" << endl;
+    cout << "input file= " << params.inputFilename << endl;
+    if (outputOnFile) {
+        cout << "output file= " << params.outputFilename << endl;
+    }
+    cout << "percentage in circle = " << params.percentageIncircle << endl;
+    cout << "elbow threshold = " << params.elbowThreshold << endl;
+    cout << "percentage subspaces = " << params.percentageSubspaces << endl;
+    cout << "k_max = " << params.k_max << endl << endl;
+
+    /***
+     * The dataset in the input CSV file is read and loaded in "data".
+     * Then each dimension in the dataset is centered around the mean value.
+    ***/
     double **data, *data_storage;
-    getDatasetDims(filename, &N_DIMS, &N_DATA);
-
+    getDatasetDims(inFile, &N_DIMS, &N_DATA);
     data_storage = (double *) malloc(N_DIMS * N_DATA * sizeof(double));
-    if (data_storage == nullptr) {
-        cout << "Malloc error on data_storage" << endl;
+    if (!data_storage) {
+        cerr << "Malloc error on data_storage" << endl;
         exit(-1);
     }
     data = (double **) malloc(N_DIMS * sizeof(double *));
-    if (data == nullptr) {
-        cout << "Malloc error on data" << endl;
+    if (!data) {
+        cerr << "Malloc error on data" << endl;
         exit(-1);
     }
-
     for (int i = 0; i < N_DIMS; ++i) {
         data[i] = &data_storage[i * N_DATA];
     }
 
-    // Fill the structure from csv
-    loadData(filename, data, N_DIMS);
+    if (loadData(inFile, data, N_DIMS)) {
+        cerr << "Error on loading dataset" << endl;
+        exit(-1);
+    }
 
     cout << "Dataset Loaded" << endl;
-/*    for (int i = 0; i < N_DIMS; ++i) {
-        for(int j = 0; j < N_DATA; j++) {
-            cout << data[i][j] << " ";
-        }
-       cout << "\n";
-    }*/
-
     auto start = chrono::steady_clock::now();
 
-    //Standardization
     Standardize_dataset(data, N_DIMS, N_DATA);
 
     cout << "Dataset standardized" << endl;
 
-    //Define the structure to load the Correlation Matrix
+    /***
+     * The Pearson Coefficient is computed on each dimensions pair in order
+     * to partition the dimensions in CORR and UNCORR sets (CORR U UNCORR = DIMS).
+     * The partitions are computed with the evaluation of the Pearson coefficient
+     * row-wise sum for each dimension. If the value is greater than or equal to
+     * zero, then the dimension is saved in "corr", otherwise the index of the
+     * dimension is saved in "uncorr".
+    ***/
     double **pearson, *pearson_storage;
     pearson_storage = (double *) malloc(N_DIMS * N_DIMS * sizeof(double));
-    if (pearson_storage == nullptr) {
-        cout << "Malloc error on pearson_storage" << endl;
+    if (!pearson_storage) {
+        cerr << "Malloc error on pearson_storage" << endl;
         exit(-1);
     }
     pearson = (double **) malloc(N_DIMS * sizeof(double *));
-    if (pearson == nullptr) {
-        cout << "Malloc error on pearson" << endl;
+    if (!pearson) {
+        cerr << "Malloc error on pearson" << endl;
         exit(-1);
     }
-
     for (int i = 0; i < N_DIMS; ++i) {
         pearson[i] = &pearson_storage[i * N_DIMS];
     }
@@ -119,14 +184,7 @@ int main() {
     }
 
     cout << "Pearson Correlation Coefficient computed" << endl;
-    for (int i = 0; i < N_DIMS; ++i) {
-        for(int j = 0; j < N_DIMS; j++) {
-            cout << pearson[i][j] << " ";
-        }
-        cout << "\n";
-    }
 
-    //Dimensions partitioned in CORR and UNCORR, then CORR U UNCORR = DIMS
     int corr_vars = 0, uncorr_vars = 0;
     for (int i = 0; i < N_DIMS; ++i) {
         double overall = 0.0;
@@ -154,13 +212,13 @@ int main() {
     double **corr;
     int *uncorr;
     corr = (double **) malloc(corr_vars * sizeof(double *));
-    if (corr == nullptr) {
-        cout << "Malloc error on corr" << endl;
+    if (!corr) {
+        cerr << "Malloc error on corr" << endl;
         exit(-1);
     }
     uncorr = (int *) (malloc(uncorr_vars * sizeof(int)));
-    if (uncorr == nullptr) {
-        cout << "Malloc error on corr or uncorr" << endl;
+    if (!uncorr) {
+        cerr << "Malloc error on corr or uncorr" << endl;
         exit(-1);
     }
 
@@ -185,30 +243,23 @@ int main() {
     free(pearson);
     cout << "Correlated dimensions: " << corr_vars << ", " << "Uncorrelated dimensions: " << uncorr_vars << endl;
 
-//    cout << "CORR subspace" << endl;
-//    for (int i = 0; i < corr_vars; ++i) {
-//        for(int j = 0; j < N_DATA; j++) {
-//            cout << corr[i][j] << " ";
-//        }
-//        cout << "\n";
-//    }
-//
-//    cout << "UNCORR subspace" << endl;
-//    for (int i = 0; i < uncorr_vars; ++i) {
-//        cout << uncorr[i] << " ";
-//    }
-//    cout << "\n";
-
-    //Define the structure to save PC1_corr and PC2_corr ------ matrix [2 * N_DATA]
+    /***
+     * The Principal Component Analysis is computed on CORR set and the result
+     * is saved in "newspace".
+     * Then the candidate subspaces are created with the combination of newspace
+     * and each dimension in UNCORR set; this combination is saved in "combine"
+     * in order to pass this structure to the PCA function. This result is saved
+     * in "cs".
+    ***/
     double **newspace, *newspace_storage;
     newspace_storage = (double *) malloc(N_DATA * 2 * sizeof(double));
-    if (newspace_storage == nullptr) {
-        cout << "Malloc error on newspace_storage" << endl;
+    if (!newspace_storage) {
+        cerr << "Malloc error on newspace_storage" << endl;
         exit(-1);
     }
     newspace = (double **) malloc(2 * sizeof(double *));
-    if (newspace == nullptr) {
-        cout << "Malloc error on newspace" << endl;
+    if (!newspace) {
+        cerr << "Malloc error on newspace" << endl;
         exit(-1);
     }
     for (int i = 0; i < 2; ++i) {
@@ -220,24 +271,22 @@ int main() {
     free(corr);
     cout << "PCA computed on CORR subspace" << endl;
 
-    //Define the structure to save the candidate subspaces ------ #UNCORR * matrix [2 * N_DATA]
     double *cs_storage, **csi, ***cs;
     cs_storage = (double *) malloc(N_DATA * 2 * uncorr_vars * sizeof(double));
-    if (cs_storage == nullptr) {
-        cout << "Malloc error on cs_storage" << endl;
+    if (!cs_storage) {
+        cerr << "Malloc error on cs_storage" << endl;
         exit(-1);
     }
     csi = (double **) malloc(2 * uncorr_vars * sizeof(double *));
-    if (csi == nullptr) {
-        cout << "Malloc error on csi" << endl;
+    if (!csi) {
+        cerr << "Malloc error on csi" << endl;
         exit(-1);
     }
     cs = (double ***) malloc(uncorr_vars * sizeof(double **));
-    if (cs == nullptr) {
-        cout << "Malloc error on cs" << endl;
+    if (!cs) {
+        cerr << "Malloc error on cs" << endl;
         exit(-1);
     }
-
     for (int i = 0; i < 2 * uncorr_vars; ++i) {
         csi[i] = &cs_storage[i * N_DATA];
     }
@@ -245,23 +294,22 @@ int main() {
         cs[i] = &csi[i * 2];
     }
 
-    //Define the structure to save the candidate subspace CS_i ------ matrix [3 * N_DATA]
     double **combine, *combine_storage;
     combine_storage = (double *) malloc(N_DATA * 3 * sizeof(double));
-    if (combine_storage == nullptr) {
-        cout << "Malloc error on combine_storage" << endl;
+    if (!combine_storage) {
+        cerr << "Malloc error on combine_storage" << endl;
         exit(-1);
     }
     combine = (double **) malloc(3 * sizeof(double *));
-    if (combine == nullptr) {
-        cout << "Malloc error on combine" << endl;
+    if (!combine) {
+        cerr << "Malloc error on combine" << endl;
         exit(-1);
     }
     for (int l = 0; l < 3; ++l) {
         combine[l] = &combine_storage[l * N_DATA];
     }
 
-    //Concatenate PC1_corr, PC2_corr
+
     memcpy(combine[0], newspace[0], N_DATA * sizeof(double));
     memcpy(combine[1], newspace[1], N_DATA * sizeof(double));
 
@@ -269,9 +317,7 @@ int main() {
     free(newspace);
 
     for (int i = 0; i < uncorr_vars; ++i) {
-        //Concatenate PC1_corr, PC2_corr and i-th dimension of uncorr
         memcpy(combine[2], data[uncorr[i]], N_DATA * sizeof(double));
-
         PCA_transform(combine, 3, N_DATA, cs[i]);
         cout << "PCA computed on PC1_CORR, PC2_CORR and " << i+1 << "-th dimension of UNCORR" << endl;
     }
@@ -280,33 +326,43 @@ int main() {
     free(combine_storage);
     free(combine);
 
-    //boolean matrix [uncorr_var*N_DATA]: True says the data is in the circles, otherwise False
+    /***
+     * The K-Means with the elbow criterion is executed for each candidate subspace.
+     * The structure "incircle" keep records of the inliers for each candidate subspace.
+     * Then the outlier identification process starts:
+     * 1) For each cluster, the cluster size is computed to define a threshold on the
+     *      number of inliers;
+     * 2) Iteratively, the distance between the centroids and the points in the cluster
+     *      and the cluster size (without the inliers excluded in the previous iteration)
+     *      are computed.
+     * 3) The radius of the circle for inliers evaluation is computed and a new set of
+     *      inliers is discarded based on that radius.
+     * The outlier identification process ends with the general evaluation: if a data is
+     * an outlier for a chosen percentage of subspaces then it is marked as general outlier.
+    ***/
     bool **incircle, *incircle_storage;
-    incircle_storage = (bool *) malloc(uncorr_vars * N_DATA * sizeof(bool));
-    if (incircle_storage == nullptr) {
-        cout << "Malloc error on incircle_storage" << endl;
+    incircle_storage = (bool *) calloc(uncorr_vars * N_DATA, sizeof(bool));
+    if (!incircle_storage) {
+        cerr << "Malloc error on incircle_storage" << endl;
         exit(-1);
     }
     incircle = (bool **) malloc(uncorr_vars * sizeof(bool *));
-    if (incircle == nullptr) {
-        cout << "Malloc error on incircle" << endl;
+    if (!incircle) {
+        cerr << "Malloc error on incircle" << endl;
         exit(-1);
     }
-
     for (int i = 0; i < uncorr_vars; ++i) {
         incircle[i] = &incircle_storage[i * N_DATA];
     }
 
-    fill_n(incircle_storage, uncorr_vars * N_DATA, false);
-
     for (int i = 0; i < uncorr_vars; ++i) {
         cluster_report rep;
         cout << "Candidate Subspace " << i+1 << ": ";
-        rep = run_K_means(cs[i], N_DATA); //Clustering through Elbow criterion on i-th candidate subspace
+        rep = run_K_means(cs[i], N_DATA, params.k_max, params.elbowThreshold); //Clustering through Elbow criterion on i-th candidate subspace
         for (int j = 0; j < rep.k; ++j) {
             int k = 0, previous_k = 0;
             int cls_size = cluster_size(rep, j, N_DATA);
-            while (k < PERCENTAGE_INCIRCLE * cls_size) {
+            while (k < params.percentageIncircle * cls_size) {
                 double dist = 0.0;
                 int actual_cluster_size = 0;
                 for (int l = 0; l < N_DATA; ++l) {
@@ -332,15 +388,13 @@ int main() {
                 }
             }
         }
-        if (save_output) {
+        if (outputOnFile) {
             string fileoutname = "dataout";
             string num = to_string(i);
             string concat = fileoutname + num + ".csv";
-            csv_out_info(cs[i], N_DATA, concat, incircle[i], rep);
+            csv_out_info(cs[i], N_DATA, concat, outFile, incircle[i], rep);
         }
     }
-
-    auto end = chrono::steady_clock::now();
 
     cout << "Outliers Identification Process: \n";
 
@@ -353,7 +407,7 @@ int main() {
             }
         }
 
-        if (occurrence >= std::round(uncorr_vars * PERCENTAGE_SUBSPACES)) {
+        if (occurrence >= std::round(uncorr_vars * params.percentageSubspaces)) {
             tot_outliers++;
             cout << i << ") ";
             for (int l = 0; l < N_DIMS; ++l) {
@@ -374,6 +428,8 @@ int main() {
 
     cout << "TOTAL NUMBER OF OUTLIERS: " << tot_outliers << endl;
 
+    auto end = chrono::steady_clock::now();
+
     cout << "Elapsed time in milliseconds : "
          << chrono::duration_cast<chrono::milliseconds>(end - start).count()
          << " ms" << endl;
@@ -381,298 +437,14 @@ int main() {
     return 0;
 }
 
-
-void getDatasetDims(string fname, int *dim, int *data) {
-    int cols = 0;
-    int rows = 0;
-    ifstream file(fname);
-    string line;
-    int first = 1;
-
-    while (getline(file, line)) {
-        if (first) {
-            istringstream iss(line);
-            string result;
-            while (getline(iss, result, ','))
-            {
-                cols++;
-            }
-            first = 0;
-        }
-        rows++;
-    }
-    *dim = cols;
-    *data = rows;
-    cout << "Dataset: #DATA = " << *data << " , #DIMENSIONS = " << *dim << endl;
-    file.close();
-}
-
-void loadData(string fname, double **array, int n_dims) {
-    ifstream inputFile(fname);
-    int row = 0;
-    while (inputFile) {
-        string s;
-        if (!getline(inputFile, s)) break;
-        if (s[0] != '#') {
-            istringstream ss(s);
-            while (ss) {
-                for (int i = 0; i < n_dims; i++) {
-                    string line;
-                    if (!getline(ss, line, ','))
-                        break;
-                    try {
-                        array[i][row] = stod(line);
-                    } catch (const invalid_argument e) {
-                        cout << "NaN found in file " << fname << " line " << row
-                             << endl;
-                        e.what();
-                    }
-                }
-            }
-        }
-        row++;
-    }
-    if (!inputFile.eof()) {
-        cerr << "Could not read file " << fname << endl;
-        __throw_invalid_argument("File not found.");
-    }
-}
-
-double getMean(double *arr, int n_data) {
-    double sum = 0.0;
-
-    for (int i = 0; i<n_data; i++) {
-        sum += arr[i];
-    }
-
-    return sum/n_data;
-}
-
-void Standardize_dataset(double **data, int n_dims, int n_data) {
-
-    for (int i = 0; i < n_dims; ++i) {
-        double mean = getMean(data[i], n_data);
-        for(int j = 0; j < n_data; j++) {
-            data[i][j] = (data[i][j] - mean);
-        }
-    }
-}
-
-double PearsonCoefficient(double *X, double *Y, int n_data) {
-    //double sum_X = 0, sum_Y = 0;
-    double sum_XY = 0, squareSum_X = 0, squareSum_Y = 0;
-
-    for (int i = 0; i < n_data; i++) {
-        //sum_X += X[i];
-        //sum_Y += Y[i];
-        sum_XY += X[i] * Y[i]; // sum of X[i] * Y[i]
-        squareSum_X += X[i] * X[i]; // sum of square of array elements
-        squareSum_Y += Y[i] * Y[i];
-    }
-
-    double corr = (double)sum_XY / sqrt(squareSum_X * squareSum_Y);
-    /*double corr = (double)(n_data * sum_XY - sum_X * sum_Y)
-                  / sqrt((n_data * squareSum_X - sum_X * sum_X)
-                         * (n_data * squareSum_Y - sum_Y * sum_Y));*/
-    return corr;
-}
-
-void PCA_transform(double **data_to_transform, int data_dim, int n_data, double **new_space) {
-    real_2d_array dset, basis;
-    real_1d_array variances;
-    variances.setlength(2);
-    dset.setlength(n_data, data_dim);
-    basis.setlength(data_dim, 2);
-    for (int i = 0; i < n_data; ++i) {
-        for(int j = 0; j < data_dim; j++) {
-            dset[i][j] = data_to_transform[j][i];
-        }
-    }
-
-    pcatruncatedsubspace(dset, n_data, data_dim, 2, 0.0, 0, variances, basis);
-
-//    cout << "PCA result: " << endl;
-//    for (int i = 0; i < data_dim; ++i) {
-//        for(int j = 0; j < 2; j++) {
-//            cout << basis[i][j] << " ";
-//        }
-//        cout << "\n";
-//    }
-
-    for (int i=0; i < n_data; i++) {
-        for (int j=0;j<2;j++) {
-            new_space[j][i]=0;
-            for (int k=0;k<data_dim;k++) {
-                new_space[j][i] += dset[i][k] * basis[k][j];
-            }
-        }
-    }
-
-//    cout << "The resulting subspace: " << endl;
-//    for(int j = 0; j < 2; j++) {
-//        for (int i = 0; i < n_data; ++i) {
-//            cout << new_space[j][i] << " ";
-//        }
-//        cout << "\n";
-//    }
-}
-
-int cluster_size(cluster_report rep, int cluster_id, int n_data) {
-    int occurrence = 0;
-    for (int i = 0; i < n_data; ++i) {
-        if (rep.cidx[i] == cluster_id) {
-            occurrence++;
-        }
-    }
-    return occurrence;
-}
-
-cluster_report run_K_means(double **data_to_transform, int n_data) {
-    mat data(2, n_data);
-    mat final;
-    cluster_report final_rep, previous_rep;
-    previous_rep.cidx = (int *) malloc(n_data * sizeof(int));
-    final_rep.cidx = (int *) malloc(n_data * sizeof(int));
-    if (previous_rep.cidx == nullptr) {
-        cout << "Malloc error on cidx" << endl;
-        exit(-1);
-    }
-
-    for (int j = 0; j < 2; j++) {
-        for (int i = 0; i < n_data; ++i) {
-            data(j,i) = data_to_transform[j][i];
-        }
-    }
-
-    for (int j = 1; j <= K_MAX; ++j) {
-        bool status = kmeans(final, data, j, random_subset, 30, false);
-        if (!status) {
-            cout << "Error in KMeans run." << endl;
-            exit(-1);
-        }
-
-        if (j == 1) {
-            previous_rep.centroids = final;
-            previous_rep.k = j;
-            previous_rep.BetaCV = 0.0;
-            fill_n(previous_rep.cidx, n_data, 0);
-        } else {
-            final_rep.centroids = final;
-            final_rep.k = j;
-            create_cidx_matrix(data_to_transform, n_data, final_rep);
-            final_rep.BetaCV = BetaCV(data_to_transform, final_rep, n_data);
-            if (abs(previous_rep.BetaCV - final_rep.BetaCV) <= ELBOW_THRES) {
-                cout << "The optimal K is " << final_rep.k << endl;
-                return final_rep;
-            } else {
-                previous_rep = final_rep;
-            }
-        }
-    }
-    cout << "The optimal K is " << final_rep.k << endl;
-    return final_rep;
-}
-
-void create_cidx_matrix(double **data, int n_data, cluster_report instance) {
-    for (int i = 0; i < n_data; ++i) {
-        double min_dist = L2distance(instance.centroids.at(0,0), instance.centroids.at(1,0), data[0][i], data[1][i]);
-        instance.cidx[i] = 0;
-        for (int j = 1; j < instance.k; ++j) {
-            double new_dist = L2distance(instance.centroids.at(0,j), instance.centroids.at(1,j), data[0][i], data[1][i]);
-            if (new_dist < min_dist) {
-                min_dist = new_dist;
-                instance.cidx[i] = j;
-            }
-        }
-    }
-}
-
-double WithinClusterSS(double **data, cluster_report instance, int n_data) {
-    double wss = 0.0;
-    for (int i = 0; i < n_data; ++i) {
-        int cluster_idx = instance.cidx[i];
-        wss += L2distance(instance.centroids.at(0,cluster_idx), instance.centroids.at(1,cluster_idx), data[0][i], data[1][i]);
-    }
-    return wss;
-}
-
-double BetweenClusterSS(double **data, cluster_report instance, int n_data) {
-    double pc1_mean = getMean(data[0], n_data);
-    double pc2_mean = getMean(data[1], n_data);
-    double bss = 0.0;
-    for (int i = 0; i < instance.k; ++i) {
-        double n_points = cluster_size(instance, i, n_data);
-        bss += n_points * L2distance(instance.centroids.at(0, i), instance.centroids.at(1, i), pc1_mean, pc2_mean);
-    }
-
-    return bss;
-}
-
-int WithinClusterPairs(cluster_report instance, int n_data) {
-    int counter = 0;
-    for (int i = 0; i < instance.k; ++i) {
-        int n_points = cluster_size(instance, i, n_data);
-        counter += (n_points - 1) * n_points;
-    }
-    return counter/2;
-}
-
-int BetweenClusterPairs(cluster_report instance, int n_data) {
-    int counter = 0;
-    for (int i = 0; i < instance.k; ++i) {
-        int n_points = cluster_size(instance, i, n_data);
-        for (int j = 0; j < instance.k; ++j) {
-            if (i != j) {
-                counter += n_points * cluster_size(instance, j, n_data);
-            }
-        }
-    }
-    return counter/2;
-}
-
-double BetaCV(double **data, cluster_report instance, int n_data) {
-    double bss = BetweenClusterSS(data, instance, n_data);
-    double wss = WithinClusterSS(data, instance, n_data);
-    int N_in = WithinClusterPairs(instance, n_data);
-    int N_out = BetweenClusterPairs(instance, n_data);
-
-    return ((double) N_out / N_in) * (wss / bss);
-}
-
-double L2distance(double xc, double yc, double x1, double y1) {
-    double x = xc - x1; //calculating number to square in next step
-    double y = yc - y1;
-    double dist;
-
-    dist = pow(x, 2) + pow(y, 2);       //calculating Euclidean distance
-    dist = sqrt(dist);
-
-    return dist;
-}
-
-void csv_out_info(double **data, int n_data, string name, bool *incircle, cluster_report report) {
-    fstream fout;
-    fout.open(outdir + name, ios::out | ios::trunc);
-
-    for (int i = 0; i < n_data; ++i) {
-        for (int j = 0; j < 2; ++j) {
-            fout << data[j][i] << ",";
-        }
-        if (incircle[i]) {
-            fout << "1,";
-        } else {
-            fout << "0,";
-        }
-        fout << report.cidx[i];
-        fout << "\n";
-    }
-
-    fout.close();
-    fstream fout2;
-    fout2.open(outdir + "centroids_" + name, ios::out | ios::trunc);
-    for (int i = 0; i < report.k; ++i) {
-        fout2 << report.centroids.at(0, i) << ",";
-        fout2 << report.centroids.at(1, i) << "\n";
-    }
-    fout2.close();
+void usage(char* cmd)
+{
+    cerr
+            << "Usage: " << cmd << "\n"
+            << "-of         output filename, if specified a file with this name containing the final result is written\n"
+            << "-k          max number of clusters to try in elbow criterion\n"
+            << "-et         threshold for the selection of optimal number of clusters in Elbow method\n"
+            << "-pi         percentage of points in a cluster to be evaluated as inlier\n"
+            << "-pspace     percentage of subspaces in which a point must be outlier to be evaluated as general outlier\n"
+            << "-if         input filename\n";
 }
