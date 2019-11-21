@@ -150,6 +150,33 @@ adaptive_clustering.cpp.s:
 	$(MAKE) -f CMakeFiles/AdaptiveClustering.dir/build.make CMakeFiles/AdaptiveClustering.dir/adaptive_clustering.cpp.s
 .PHONY : adaptive_clustering.cpp.s
 
+error.o: error.cpp.o
+
+.PHONY : error.o
+
+# target to build an object file
+error.cpp.o:
+	$(MAKE) -f CMakeFiles/AdaptiveClustering.dir/build.make CMakeFiles/AdaptiveClustering.dir/error.cpp.o
+.PHONY : error.cpp.o
+
+error.i: error.cpp.i
+
+.PHONY : error.i
+
+# target to preprocess a source file
+error.cpp.i:
+	$(MAKE) -f CMakeFiles/AdaptiveClustering.dir/build.make CMakeFiles/AdaptiveClustering.dir/error.cpp.i
+.PHONY : error.cpp.i
+
+error.s: error.cpp.s
+
+.PHONY : error.s
+
+# target to generate assembly for a file
+error.cpp.s:
+	$(MAKE) -f CMakeFiles/AdaptiveClustering.dir/build.make CMakeFiles/AdaptiveClustering.dir/error.cpp.s
+.PHONY : error.cpp.s
+
 main.o: main.cpp.o
 
 .PHONY : main.o
@@ -189,6 +216,9 @@ help:
 	@echo "... adaptive_clustering.o"
 	@echo "... adaptive_clustering.i"
 	@echo "... adaptive_clustering.s"
+	@echo "... error.o"
+	@echo "... error.i"
+	@echo "... error.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"

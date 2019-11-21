@@ -5,6 +5,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
   "/home/andrea/Scrivania/AdaptiveClustering/adaptive_clustering.cpp" "/home/andrea/Scrivania/AdaptiveClustering/cmake-build-debug/CMakeFiles/AdaptiveClustering.dir/adaptive_clustering.cpp.o"
+  "/home/andrea/Scrivania/AdaptiveClustering/error.cpp" "/home/andrea/Scrivania/AdaptiveClustering/cmake-build-debug/CMakeFiles/AdaptiveClustering.dir/error.cpp.o"
   "/home/andrea/Scrivania/AdaptiveClustering/main.cpp" "/home/andrea/Scrivania/AdaptiveClustering/cmake-build-debug/CMakeFiles/AdaptiveClustering.dir/main.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")

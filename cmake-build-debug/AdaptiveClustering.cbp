@@ -90,6 +90,12 @@
 		<Unit filename="/home/andrea/Scrivania/AdaptiveClustering/adaptive_clustering.h">
 			<Option target="AdaptiveClustering"/>
 		</Unit>
+		<Unit filename="/home/andrea/Scrivania/AdaptiveClustering/error.cpp">
+			<Option target="AdaptiveClustering"/>
+		</Unit>
+		<Unit filename="/home/andrea/Scrivania/AdaptiveClustering/error.h">
+			<Option target="AdaptiveClustering"/>
+		</Unit>
 		<Unit filename="/home/andrea/Scrivania/AdaptiveClustering/main.cpp">
 			<Option target="AdaptiveClustering"/>
 		</Unit>

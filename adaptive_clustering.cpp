@@ -1,44 +1,39 @@
 #include "adaptive_clustering.h"
+#include "error.h"
 
-/**
- * The algorithm calculates the number of rows and columns in a CSV file and saves the information into dim and data.
- * @param [in] fname the path referred to a CSV file.
- * @param [in,out] dim the number of columns in the CSV file.
- * @param [in,out] data the number of rows in the CSV file.
- */
-void getDatasetDims(string fname, int *dim, int *data) {
-    int cols = 0;
-    int rows = 0;
+int getDatasetDims(string fname, int &dim, int &data) {
+    dim = 0;
+    data = 0;
     ifstream file(fname);
-    string line;
-    int first = 1;
 
-    while (getline(file, line)) {
-        if (first) {
-            istringstream iss(line);
-            string result;
-            while (getline(iss, result, ','))
-            {
-                cols++;
+    while (file) {
+        string s;
+        if (!getline(file, s)) break;
+        if (data == 0) {
+            istringstream ss(s);
+            while (ss) {
+                string line;
+                if (!getline(ss, line, ','))
+                    break;
+                dim++;
             }
-            first = 0;
         }
-        rows++;
+        data++;
     }
-    *dim = cols;
-    *data = rows;
-    cout << "Dataset: #DATA = " << *data << " , #DIMENSIONS = " << *dim << endl;
+    if (!file.eof()) {
+        file.close();
+        return InputFileError(__FUNCTION__);
+    }
+
+    cout << "Dataset: #DATA = " << data << " , #DIMENSIONS = " << dim << endl;
     file.close();
+    return 0;
 }
 
-/**
- * The algorithm loads a CSV file into a matrix of double.
- * @param [in] fname the number of columns in the CSV file.
- * @param [in,out] array a matrix [n_data, n_dims], in which the CSV file is loaded.
- * @param [in] n_dims the number of columns in the CSV file.
- * @return 0 if the dataset is loaded correctly, otherwise -1.
- */
 int loadData(string fname, double **array, int n_dims) {
+    if (!array) {
+        return NullPointerError(__FUNCTION__);
+    }
     ifstream inputFile(fname);
     int row = 0;
     while (inputFile) {
@@ -56,7 +51,8 @@ int loadData(string fname, double **array, int n_dims) {
                     } catch (const invalid_argument e) {
                         cout << "NaN found in file " << fname << " line " << row
                              << endl;
-                        e.what();
+                        inputFile.close();
+                        return ConversionError(__FUNCTION__);
                     }
                 }
             }
@@ -64,53 +60,42 @@ int loadData(string fname, double **array, int n_dims) {
         row++;
     }
     if (!inputFile.eof()) {
-        cerr << "Could not read file " << fname << endl;
-        //__throw_invalid_argument("File not found.");
-        return -1;
+        inputFile.close();
+        return InputFileError(__FUNCTION__);
     }
+    inputFile.close();
     return 0;
 }
 
-/**
- * Get the mean value from an array of n elements.
- * @param [in] arr the array containing the data.
- * @param [in] n_data the number of elements in the array.
- * @return a double value indicating the mean.
- */
 double getMean(double *arr, int n_data) {
-    double sum = 0.0;
-
-    for (int i = 0; i<n_data; i++) {
-        sum += arr[i];
+    if (!arr) {
+        exit(NullPointerError(__FUNCTION__));
     }
 
+    double sum = 0.0;
+    for (int i = 0; i < n_data; ++i) {
+        sum += arr[i];
+    }
     return sum/n_data;
 }
 
-/**
- * This function centers each dimension in the dataset around the mean value.
- * @param [in, out] data a matrix [n_dims, n_data] containing the dataset.
- * @param [in] n_dims the number of dimensions.
- * @param [in] n_data the number of data.
- */
-void Standardize_dataset(double **data, int n_dims, int n_data) {
-
+int Standardize_dataset(double **data, int n_dims, int n_data) {
+    if (!data) {
+        return NullPointerError(__FUNCTION__);
+    }
     for (int i = 0; i < n_dims; ++i) {
         double mean = getMean(data[i], n_data);
         for(int j = 0; j < n_data; j++) {
             data[i][j] = (data[i][j] - mean);
         }
     }
+    return 0;
 }
 
-/**
- * This function computes the Pearson coefficient of dimensions centered around the mean value.
- * @param [in] X an array containing the data of the first dimension.
- * @param [in] Y an array containing the data of the first dimension.
- * @param [in] n_data the number of data in each array.
- * @return a double value indicating the Pearson coefficient between X and Y.
- */
 double PearsonCoefficient(double *X, double *Y, int n_data) {
+    if (!X || !Y) {
+        exit(NullPointerError(__FUNCTION__));
+    }
     //double sum_X = 0, sum_Y = 0;
     double sum_XY = 0, squareSum_X = 0, squareSum_Y = 0;
 
@@ -129,24 +114,65 @@ double PearsonCoefficient(double *X, double *Y, int n_data) {
     return corr;
 }
 
-/**
- * This function computes the Principal Component Analysis with the 2 Principal Components.
- * @param [in] data_to_transform a matrix [data_dim, n_data] containing the data to transform.
- * @param [in] data_dim the number of dimensions in data_to_transform.
- * @param [in] n_data the number of data in data_to_transform.
- * @param [in, out] new_space the subspace resulting from the input data transformed through the 2 Principal Components.
- */
-void PCA_transform(double **data_to_transform, int data_dim, int n_data, double **new_space) {
+int computePearsonMatrix(double **pearson, double **data, int n_data, int n_dims) {
+    if (!pearson || !data) {
+        return NullPointerError(__FUNCTION__);
+    }
+    for (int i = 0; i < n_dims; ++i) {
+        pearson[i][i] = 1;
+        for (int j = i+1; j < n_dims; ++j) {
+            double value = PearsonCoefficient(data[i], data[j], n_data);
+            pearson[i][j] = value;
+            pearson[j][i] = value;
+        }
+    }
+    return 0;
+};
+
+bool isCorrDimension(int ndims, int dimensionID, double **pcc) {
+    if (!pcc) {
+        exit(NullPointerError(__FUNCTION__));
+    }
+    double overall = 0.0;
+    for (int secondDimension = 0; secondDimension < ndims; ++secondDimension) {
+        if (secondDimension != dimensionID) {
+            overall += pcc[dimensionID][secondDimension];
+        }
+    }
+    return ( (overall / ndims) >= 0 );
+}
+
+int computeCorrUncorrCardinality(double **pcc, int ndims, int &corr_vars, int &uncorr_vars) {
+    if (!pcc) {
+        return NullPointerError(__FUNCTION__);
+    }
+
+    corr_vars = 0, uncorr_vars = 0;
+    for (int i = 0; i < ndims; ++i) {
+        if (isCorrDimension(ndims, i, pcc)) {
+            corr_vars++;
+        }
+    }
+    uncorr_vars = ndims - corr_vars;
+    return 0;
+}
+
+int PCA_transform(double **data_to_transform, int data_dim, int n_data, double **new_space) {
+    if (!data_to_transform || !new_space) {
+        return NullPointerError(__FUNCTION__);
+    }
+
+    int status = -12;
     double **covar, *covar_storage;
     covar_storage = (double *) malloc(data_dim * data_dim * sizeof(double));
     if (!covar_storage) {
-        cout << "Malloc error on covar_storage" << endl;
-        exit(-1);
+        return MemoryError(__FUNCTION__);
     }
     covar = (double **) malloc(data_dim * sizeof(double *));
     if (!covar) {
-        cout << "Malloc error on covar" << endl;
-        exit(-1);
+        free(covar_storage), covar_storage = nullptr;
+        status = MemoryError(__FUNCTION__);
+        return status;
     }
     for (int i = 0; i < data_dim; ++i) {
         covar[i] = &covar_storage[i * data_dim];
@@ -158,7 +184,7 @@ void PCA_transform(double **data_to_transform, int data_dim, int n_data, double 
             for (int k = 0; k < n_data; ++k) {
                 covar[i][j] += data_to_transform[i][k] * data_to_transform[j][k];
             }
-            covar[i][j] = covar[i][j] / (n_data - 1);
+            covar[i][j] = covar[i][j] / n_data;
             covar[j][i] = covar[i][j];
         }
     }
@@ -168,8 +194,8 @@ void PCA_transform(double **data_to_transform, int data_dim, int n_data, double 
     mat eigvec;
     eig_sym(eigval, eigvec, cov_mat);
 
-    free(covar_storage);
-    free(covar);
+    free(covar_storage), covar_storage = nullptr;
+    free(covar), covar = nullptr;
 
     for (int i = 0; i < 2; ++i) {
         for (int j = 0; j < n_data; ++j) {
@@ -181,16 +207,13 @@ void PCA_transform(double **data_to_transform, int data_dim, int n_data, double 
             new_space[i][j] = value;
         }
     }
+    return 0;
 }
 
-/**
- * The algorithm calculates the number of elements of an indicated cluster in the given cluster report.
- * @param [in] rep a cluster_report structure describing the K-Means instance carried out.
- * @param [in] cluster_id a number (between 0 and rep.k) indicating the cluster whereby we want to know the number of data in it.
- * @param [in] n_data number of rows in the dataset matrix.
- * @return an integer indicating the number of data in the cluster with the given id.
- */
 int cluster_size(cluster_report rep, int cluster_id, int n_data) {
+    if (!rep.cidx) {
+        exit(NullPointerError(__FUNCTION__));
+    }
     int occurrence = 0;
     for (int i = 0; i < n_data; ++i) {
         if (rep.cidx[i] == cluster_id) {
@@ -200,24 +223,21 @@ int cluster_size(cluster_report rep, int cluster_id, int n_data) {
     return occurrence;
 }
 
-/**
- * This function runs the K-Means with the elbow criterion; it tries different number of clusters and
- * evaluates the instance of K-Means through the BetaCV metric in order to find the optimal number of clusters.
- * @param [in] dataset a matrix [2, n_data] containing the data for K-Means run.
- * @param [in] n_data the number of data in dataset.
- * @param [in] k_max the max number of clusters to try for elbow criterion.
- * @param [in] elbow_thr the error tolerance for BetaCV metric.
- * @return a cluster_report containing the result of the K-Means run.
- */
 cluster_report run_K_means(double **dataset, int n_data, long k_max, double elbow_thr) {
+    if (!dataset) {
+        exit(NullPointerError(__FUNCTION__));
+    }
     mat data(2, n_data);
     mat final;
     cluster_report final_rep, previous_rep;
     previous_rep.cidx = (int *) malloc(n_data * sizeof(int));
-    final_rep.cidx = (int *) malloc(n_data * sizeof(int));
     if (previous_rep.cidx == nullptr) {
-        cout << "Malloc error on cidx" << endl;
-        exit(-1);
+        exit(MemoryError(__FUNCTION__));
+    }
+    final_rep.cidx = (int *) malloc(n_data * sizeof(int));
+    if (final_rep.cidx == nullptr) {
+        free(previous_rep.cidx), previous_rep.cidx = nullptr;
+        exit(MemoryError(__FUNCTION__));
     }
 
     for (int j = 0; j < 2; j++) {
@@ -225,14 +245,12 @@ cluster_report run_K_means(double **dataset, int n_data, long k_max, double elbo
             data(j,i) = dataset[j][i];
         }
     }
-
     for (int j = 1; j <= k_max; ++j) {
         bool status = kmeans(final, data, j, random_subset, 30, false);
         if (!status) {
             cout << "Error in KMeans run." << endl;
             exit(-1);
         }
-
         if (j == 1) {
             previous_rep.centroids = final;
             previous_rep.k = j;
@@ -255,70 +273,50 @@ cluster_report run_K_means(double **dataset, int n_data, long k_max, double elbo
     return final_rep;
 }
 
-/**
- * The algorithm creates the array [1, N_DATA] which indicates the membership of each data to a cluster through an integer.
- * @param [in] data a matrix [n_data, n_dims] on which the K-Means run was made.
- * @param [in] n_data number of rows in the dataset matrix.
- * @param [in,out] instance a cluster_report structure describing the K-Means instance carried out.
- */
-void create_cidx_matrix(double **data, int n_data, cluster_report instance) {
+int create_cidx_matrix(double **data, int n_data, cluster_report instance) {
+    if (!data || instance.centroids.is_empty() || !(instance.cidx)) {
+        return NullPointerError(__FUNCTION__);
+    }
     for (int i = 0; i < n_data; ++i) {
-        double min_dist = L2distance(instance.centroids.at(0,0), instance.centroids.at(1,0), data[0][i], data[1][i]);
+        double min_dist = L2distance(instance.centroids(0,0), instance.centroids(1,0), data[0][i], data[1][i]);
         instance.cidx[i] = 0;
         for (int j = 1; j < instance.k; ++j) {
-            double new_dist = L2distance(instance.centroids.at(0,j), instance.centroids.at(1,j), data[0][i], data[1][i]);
+            double new_dist = L2distance(instance.centroids(0,j), instance.centroids(1,j), data[0][i], data[1][i]);
             if (new_dist < min_dist) {
                 min_dist = new_dist;
                 instance.cidx[i] = j;
             }
         }
     }
+    return 0;
 }
 
-/**
- * This function computes the intra-cluster weight, the sum of the Euclidean distance
- * between the centroids of a cluster and each data in it.
- * @param [in] data the data on which the K-Means was executed.
- * @param [in] instance the cluster_report containing the information about the K-Means run.
- * @param [in] n_data the number of data in data.
- * @return a double value representing the intra-cluster weight.
- */
 double WithinClusterWeight(double **data, cluster_report instance, int n_data) {
+    if (!data || instance.centroids.is_empty() || !(instance.cidx)) {
+        exit(NullPointerError(__FUNCTION__));
+    }
     double wss = 0.0;
     for (int i = 0; i < n_data; ++i) {
         int cluster_idx = instance.cidx[i];
-        wss += L2distance(instance.centroids.at(0,cluster_idx), instance.centroids.at(1,cluster_idx), data[0][i], data[1][i]);
+        wss += L2distance(instance.centroids(0,cluster_idx), instance.centroids(1,cluster_idx), data[0][i], data[1][i]);
     }
     return wss;
 }
 
-/**
- * This function computes the inter-cluster weight, the weighted sum of the Euclidean distance
- * between the centroids of each cluster and the mean value of the dataset. The weight is the number
- * of points in each cluster.
- * @param [in] data the data on which the K-Means was executed.
- * @param [in] instance the cluster_report containing the information about the K-Means run.
- * @param [in] n_data the number of data in data.
- * @return a double value representing the inter-cluster weight.
- */
 double BetweenClusterWeight(double **data, cluster_report instance, int n_data) {
+    if (!data || instance.centroids.is_empty()) {
+        exit(NullPointerError(__FUNCTION__));
+    }
     double pc1_mean = getMean(data[0], n_data);
     double pc2_mean = getMean(data[1], n_data);
     double bss = 0.0;
     for (int i = 0; i < instance.k; ++i) {
         double n_points = cluster_size(instance, i, n_data);
-        bss += n_points * L2distance(instance.centroids.at(0, i), instance.centroids.at(1, i), pc1_mean, pc2_mean);
+        bss += n_points * L2distance(instance.centroids(0, i), instance.centroids(1, i), pc1_mean, pc2_mean);
     }
-
     return bss;
 }
 
-/**
- * This function computes the number of intra-cluster pairs.
- * @param [in] instance the cluster_report containing the information about the K-Means run.
- * @param [in] n_data the number of data on which the K-Means was executed.
- * @return an integer indicating the number of intra-cluster pairs.
- */
 int WithinClusterPairs(cluster_report instance, int n_data) {
     int counter = 0;
     for (int i = 0; i < instance.k; ++i) {
@@ -328,12 +326,6 @@ int WithinClusterPairs(cluster_report instance, int n_data) {
     return counter/2;
 }
 
-/**
- * This function computes the number of inter-cluster pairs.
- * @param [in] instance the cluster_report containing the information about the K-Means run.
- * @param [in] n_data the number of data on which the K-Means was executed.
- * @return an integer indicating the number of inter-cluster pairs.
- */
 int BetweenClusterPairs(cluster_report instance, int n_data) {
     int counter = 0;
     for (int i = 0; i < instance.k; ++i) {
@@ -347,44 +339,70 @@ int BetweenClusterPairs(cluster_report instance, int n_data) {
     return counter/2;
 }
 
-/**
- * This function computes the BetaCV metric for elbow criterion evaluation.
- * @param [in] data a matrix containing the data on which the K-Means run was executed.
- * @param [in] instance the cluster_report containing the information about the K-Means run.
- * @param [in] n_data the number of data.
- * @return a double value indicating the BetaCV value.
- */
 double BetaCV(double **data, cluster_report instance, int n_data) {
+    if (!data) {
+        exit(NullPointerError(__FUNCTION__));
+    }
     double bss = BetweenClusterWeight(data, instance, n_data);
     double wss = WithinClusterWeight(data, instance, n_data);
     int N_in = WithinClusterPairs(instance, n_data);
     int N_out = BetweenClusterPairs(instance, n_data);
-
     return ((double) N_out / N_in) * (wss / bss);
 }
 
-/**
- * The algorithm calculates the Euclidean distance between two points p_c and p_1.
- * @param [in] xc the first component of p_c.
- * @param [in] yc the second component of p_c.
- * @param [in] x1 the first component of p_1.
- * @param [in] y1 the second component of p_1.
- * @return a double value indicating the Euclidean distance between the two given points.
- */
 double L2distance(double xc, double yc, double x1, double y1) {
     double x = xc - x1;
     double y = yc - y1;
     double dist;
-
     dist = pow(x, 2) + pow(y, 2);
     dist = sqrt(dist);
-
     return dist;
 }
 
-/**
- * Extra function to save centroids and candidate subspace in CSV files.
- */
+int computeActualClusterInfo(cluster_report rep, int n_data, int clusterID, bool *incircle, double **subspace, double &dist) {
+    if (!incircle || !subspace || !(rep.cidx) || rep.centroids.is_empty()) {
+        exit(NullPointerError(__FUNCTION__));
+    }
+    dist = 0.0;
+    int actual_cluster_size = 0;
+    for (int l = 0; l < n_data; ++l) {
+        if (rep.cidx[l] == clusterID && !(incircle[l])) {
+            dist += L2distance(rep.centroids(0, clusterID), rep.centroids(1, clusterID),
+                               subspace[0][l], subspace[1][l]);
+            actual_cluster_size++;
+        }
+    }
+    return actual_cluster_size;
+};
+int computeInliers(cluster_report rep, int n_data, int clusterID, bool *incircle, double **subspace, double radius) {
+    if (!incircle || !subspace || !(rep.cidx) || rep.centroids.is_empty()) {
+        exit(NullPointerError(__FUNCTION__));
+    }
+    int count = 0;
+    for (int l = 0; l < n_data; ++l) {
+        if (rep.cidx[l] == clusterID && !(incircle[l])) {
+            if (L2distance(rep.centroids(0,clusterID), rep.centroids(1,clusterID), subspace[0][l], subspace[1][l]) <= radius) {
+                incircle[l] = true;
+                count++;
+            }
+        }
+    }
+    return count;
+};
+
+int countOutliers(bool **incircle, int uncorr_vars, int data_idx) {
+    if (!incircle) {
+        exit(NullPointerError(__FUNCTION__));
+    }
+    int count = 0;
+    for (int j = 0; j < uncorr_vars; ++j) {
+        if (!incircle[j][data_idx]) {
+            count++;
+        }
+    }
+    return count;
+};
+
 void csv_out_info(double **data, int n_data, string name, string outdir, bool *incircle, cluster_report report) {
     fstream fout;
     fout.open(outdir + name, ios::out | ios::trunc);

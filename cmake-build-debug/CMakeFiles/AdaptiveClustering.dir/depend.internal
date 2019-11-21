@@ -4,6 +4,11 @@
 CMakeFiles/AdaptiveClustering.dir/adaptive_clustering.cpp.o
  /home/andrea/Scrivania/AdaptiveClustering/adaptive_clustering.cpp
  /home/andrea/Scrivania/AdaptiveClustering/adaptive_clustering.h
+ /home/andrea/Scrivania/AdaptiveClustering/error.h
+CMakeFiles/AdaptiveClustering.dir/error.cpp.o
+ /home/andrea/Scrivania/AdaptiveClustering/error.cpp
+ /home/andrea/Scrivania/AdaptiveClustering/error.h
 CMakeFiles/AdaptiveClustering.dir/main.cpp.o
  /home/andrea/Scrivania/AdaptiveClustering/adaptive_clustering.h
+ /home/andrea/Scrivania/AdaptiveClustering/error.h
  /home/andrea/Scrivania/AdaptiveClustering/main.cpp

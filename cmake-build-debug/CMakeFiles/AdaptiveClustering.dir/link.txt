@@ -1,1 +1,1 @@
-/usr/bin/c++  -g   CMakeFiles/AdaptiveClustering.dir/main.cpp.o CMakeFiles/AdaptiveClustering.dir/adaptive_clustering.cpp.o  -o AdaptiveClustering -lm /usr/lib/x86_64-linux-gnu/libarmadillo.so 
+/usr/bin/c++  -g   CMakeFiles/AdaptiveClustering.dir/main.cpp.o CMakeFiles/AdaptiveClustering.dir/adaptive_clustering.cpp.o CMakeFiles/AdaptiveClustering.dir/error.cpp.o  -o AdaptiveClustering -lm /usr/lib/x86_64-linux-gnu/libarmadillo.so 

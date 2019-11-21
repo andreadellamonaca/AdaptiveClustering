@@ -3,7 +3,12 @@
 
 CMakeFiles/AdaptiveClustering.dir/adaptive_clustering.cpp.o: ../adaptive_clustering.cpp
 CMakeFiles/AdaptiveClustering.dir/adaptive_clustering.cpp.o: ../adaptive_clustering.h
+CMakeFiles/AdaptiveClustering.dir/adaptive_clustering.cpp.o: ../error.h
+
+CMakeFiles/AdaptiveClustering.dir/error.cpp.o: ../error.cpp
+CMakeFiles/AdaptiveClustering.dir/error.cpp.o: ../error.h
 
 CMakeFiles/AdaptiveClustering.dir/main.cpp.o: ../adaptive_clustering.h
+CMakeFiles/AdaptiveClustering.dir/main.cpp.o: ../error.h
 CMakeFiles/AdaptiveClustering.dir/main.cpp.o: ../main.cpp
 
