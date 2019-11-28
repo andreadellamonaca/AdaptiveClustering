@@ -403,7 +403,7 @@ int countOutliers(bool **incircle, int uncorr_vars, int data_idx) {
     return count;
 };
 
-void csv_out_info(double **data, int n_data, string name, string outdir, bool *incircle, cluster_report report) {
+void csv_out_graphics(double **data, int n_data, string name, string outdir, bool *incircle, cluster_report report) {
     fstream fout;
     fout.open(outdir + name, ios::out | ios::trunc);
 

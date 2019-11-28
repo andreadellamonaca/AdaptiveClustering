@@ -226,4 +226,4 @@ extern int countOutliers(bool **incircle, int uncorr_vars, int data_idx);
 /**
  * Extra function to save centroids and candidate subspace in CSV files.
  */
-extern void csv_out_info(double **data, int n_data, string name, string outdir, bool *incircle, cluster_report report);
+extern void csv_out_graphics(double **data, int n_data, string name, string outdir, bool *incircle, cluster_report report);

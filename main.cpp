@@ -48,7 +48,7 @@ void usage(char* cmd);
  * @param [in,out] params structure to save arguments.
  * @return 0 if the command line arguments are ok, otherwise -5.
  */
-int parseCommandLine(int argc, char **argv, Params params);
+int parseCommandLine(int argc, char **argv, Params &params);
 /**
  * This function prints the parameters used for the run.
  * @param [in] params the structure with parameters.
@@ -63,8 +63,10 @@ int main(int argc, char **argv) {
     int N_DATA; //Number of observations
     double elapsed;
     string outFile;
+    outFile = "../../Validation";
     //outFile = "../plot/iris/";
     bool outputOnFile = false; //Flag for csv output generation
+    fstream fout;
     Params params;
     int programStatus = -12;
 
@@ -317,12 +319,12 @@ int main(int argc, char **argv) {
                 }
             }
         }
-        if (outputOnFile) {
-            string fileoutname = "dataout";
-            string num = to_string(i);
-            string concat = fileoutname + num + ".csv";
-            csv_out_info(cs[i], N_DATA, concat, outFile, incircle[i], rep);
-        }
+//        if (outputOnFile) {
+//            string fileoutname = "dataout";
+//            string num = to_string(i);
+//            string concat = fileoutname + num + ".csv";
+//            csv_out_graphics(cs[i], N_DATA, concat, outFile, incircle[i], rep);
+//        }
     }
 
     cout << "Outliers Identification Process: \n";
@@ -342,6 +344,18 @@ int main(int argc, char **argv) {
     }
 
     cout << "TOTAL NUMBER OF OUTLIERS: " << tot_outliers << endl;
+
+    if (outputOnFile) {
+        fout.open(outFile + "/Sequential.csv", ios::out | ios::trunc);
+        for (int i = 0; i < N_DATA; ++i) {
+            int occurrence = countOutliers(incircle, uncorr_vars, i);
+            if (occurrence >= std::round(uncorr_vars * params.percentageSubspaces)) {
+                fout << i << ",";
+            }
+        }
+        fout.close();
+    }
+
     elapsed = StopTheClock();
     cout << "Elapsed time (seconds): " << elapsed << endl;
     programStatus = 0;
@@ -394,17 +408,16 @@ double StopTheClock() {
 
 void usage(char* cmd) {
     cerr
-            << "Usage: " << cmd << "\n"
-            << "-of         output filename, if specified a file with this name containing the final result is written\n"
-            << "-k          max number of clusters to try in elbow criterion\n"
-            << "-et         threshold for the selection of optimal number of clusters in Elbow method\n"
-            << "-pi         percentage of points in a cluster to be evaluated as inlier\n"
-            << "-ps         percentage of subspaces in which a point must be outlier to be evaluated as general outlier\n"
-            << "-if         input filename\n";
+            << "Usage: " << cmd << endl
+            << "-of         output filename, if specified a file with this name containing the final result is written" << endl
+            << "-k          max number of clusters to try in elbow criterion" << endl
+            << "-et         threshold for the selection of optimal number of clusters in Elbow method" << endl
+            << "-pi         percentage of points in a cluster to be evaluated as inlier" << endl
+            << "-ps         percentage of subspaces in which a point must be outlier to be evaluated as general outlier" << endl
+            << "-if         input filename" << endl;
 }
 
-
-int parseCommandLine(int argc, char **argv, Params params) {
+int parseCommandLine(int argc, char **argv, Params &params) {
     for (int i = 1; i < argc; ++i) {
         if (strcmp(argv[i], "-of") == 0) {
             i++;
