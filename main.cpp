@@ -15,7 +15,7 @@
  * A structure containing parameters read from command-line.
  */
 struct Params {
-    string       inputFilename = "../dataset/Iris.csv"; /**< The path for the input CSV file. */
+    string       inputFilename = "../dataset/HTRU_2.csv"; /**< The path for the input CSV file. */
     string       outputFilename; /**< The path for the output file. */
     long         k_max = 10; /**< The maximum number of cluster to try for the K-Means algorithm. */
     double       elbowThreshold = 0.25; /**< The error tolerance for the selected metric to evaluate the elbow in K-means algorithm. */
@@ -325,6 +325,8 @@ int main(int argc, char **argv) {
 //            string concat = fileoutname + num + ".csv";
 //            csv_out_graphics(cs[i], N_DATA, concat, outFile, incircle[i], rep);
 //        }
+        cout << "CENTROIDS" << endl;
+        rep.centroids.print();
     }
 
     cout << "Outliers Identification Process: \n";
@@ -346,7 +348,7 @@ int main(int argc, char **argv) {
     cout << "TOTAL NUMBER OF OUTLIERS: " << tot_outliers << endl;
 
     if (outputOnFile) {
-        fout.open(outFile + "/Sequential.csv", ios::out | ios::trunc);
+        fout.open(outFile + "/HTRU_2Sequential.csv", ios::out | ios::trunc);
         for (int i = 0; i < N_DATA; ++i) {
             int occurrence = countOutliers(incircle, uncorr_vars, i);
             if (occurrence >= std::round(uncorr_vars * params.percentageSubspaces)) {
