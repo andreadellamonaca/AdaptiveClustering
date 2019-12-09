@@ -8,8 +8,6 @@
 #ifndef ADAPTIVECLUSTERING_ADAPTIVE_CLUSTERING_H
 #define ADAPTIVECLUSTERING_ADAPTIVE_CLUSTERING_H
 
-#endif //ADAPTIVECLUSTERING_ADAPTIVE_CLUSTERING_H
-
 using namespace std;
 using namespace arma;
 
@@ -223,7 +221,5 @@ extern int computeInliers(cluster_report rep, int n_data, int clusterID, bool *i
  * @return the number of times a given point is evaluated as outlier.
  */
 extern int countOutliers(bool **incircle, int uncorr_vars, int data_idx);
-/**
- * Extra function to save centroids and candidate subspace in CSV files.
- */
-extern void csv_out_graphics(double **data, int n_data, string name, string outdir, bool *incircle, cluster_report report);
+
+#endif //ADAPTIVECLUSTERING_ADAPTIVE_CLUSTERING_H

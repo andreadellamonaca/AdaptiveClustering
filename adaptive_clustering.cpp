@@ -6,22 +6,25 @@ int getDatasetDims(string fname, int &dim, int &data) {
     data = 0;
     ifstream file(fname);
 
-    while (file) {
-        string s;
-        if (!getline(file, s)) break;
-        if (data == 0) {
-            istringstream ss(s);
-            while (ss) {
+    string s;
+    if(file.is_open()){
+
+        while (getline(file, s)) {
+
+            if (data == 0) {
+                istringstream ss(s);
                 string line;
-                if (!getline(ss, line, ','))
-                    break;
-                dim++;
+                while (getline(ss, line, ',')) {
+                    dim++;
+                }
             }
+
+            data++;
         }
-        data++;
+
     }
-    if (!file.eof()) {
-        file.close();
+    else {
+        cerr << "the file " << fname << " is not open!" << endl;
         return InputFileError(__FUNCTION__);
     }
 
@@ -34,37 +37,47 @@ int loadData(string fname, double **array, int n_dims) {
     if (!array) {
         return NullPointerError(__FUNCTION__);
     }
+
     ifstream inputFile(fname);
     int row = 0;
-    while (inputFile) {
-        string s;
-        if (!getline(inputFile, s)) break;
-        if (s[0] != '#') {
-            istringstream ss(s);
-            while (ss) {
-                for (int i = 0; i < n_dims; i++) {
-                    string line;
-                    if (!getline(ss, line, ','))
-                        break;
+
+    string s;
+    if(inputFile.is_open()){
+
+        while (getline(inputFile, s)) {
+
+             if (s[0] != '#') {
+
+                 istringstream ss(s);
+
+                 for (int i = 0; i < n_dims; i++) {
+                     string line;
+                     getline(ss, line, ',');
+
                     try {
                         array[i][row] = stod(line);
-                    } catch (const invalid_argument e) {
-                        cout << "NaN found in file " << fname << " line " << row
-                             << endl;
+                    }
+                    catch (const invalid_argument e) {
+                        cout << "NaN found in file " << fname << " line " << row << endl;
                         inputFile.close();
                         return ConversionError(__FUNCTION__);
                     }
                 }
-            }
-        }
-        row++;
+
+             }
+
+             row++;
+         }
+
+         inputFile.close();
+
     }
-    if (!inputFile.eof()) {
-        inputFile.close();
+    else {
         return InputFileError(__FUNCTION__);
     }
-    inputFile.close();
+
     return 0;
+
 }
 
 double getMean(double *arr, int n_data) {
@@ -76,6 +89,7 @@ double getMean(double *arr, int n_data) {
     for (int i = 0; i < n_data; ++i) {
         sum += arr[i];
     }
+
     return sum/n_data;
 }
 
@@ -83,12 +97,14 @@ int Standardize_dataset(double **data, int n_dims, int n_data) {
     if (!data) {
         return NullPointerError(__FUNCTION__);
     }
+
     for (int i = 0; i < n_dims; ++i) {
         double mean = getMean(data[i], n_data);
         for(int j = 0; j < n_data; j++) {
             data[i][j] = (data[i][j] - mean);
         }
     }
+
     return 0;
 }
 
@@ -96,6 +112,7 @@ double PearsonCoefficient(double *X, double *Y, int n_data) {
     if (!X || !Y) {
         exit(NullPointerError(__FUNCTION__));
     }
+
     //double sum_X = 0, sum_Y = 0;
     double sum_XY = 0, squareSum_X = 0, squareSum_Y = 0;
 
@@ -118,6 +135,7 @@ int computePearsonMatrix(double **pearson, double **data, int n_data, int n_dims
     if (!pearson || !data) {
         return NullPointerError(__FUNCTION__);
     }
+
     for (int i = 0; i < n_dims; ++i) {
         pearson[i][i] = 1;
         for (int j = i+1; j < n_dims; ++j) {
@@ -126,19 +144,22 @@ int computePearsonMatrix(double **pearson, double **data, int n_data, int n_dims
             pearson[j][i] = value;
         }
     }
+
     return 0;
-};
+}
 
 bool isCorrDimension(int ndims, int dimensionID, double **pcc) {
     if (!pcc) {
         exit(NullPointerError(__FUNCTION__));
     }
+
     double overall = 0.0;
     for (int secondDimension = 0; secondDimension < ndims; ++secondDimension) {
         if (secondDimension != dimensionID) {
             overall += pcc[dimensionID][secondDimension];
         }
     }
+
     return ( (overall / ndims) >= 0 );
 }
 
@@ -154,6 +175,7 @@ int computeCorrUncorrCardinality(double **pcc, int ndims, int &corr_vars, int &u
         }
     }
     uncorr_vars = ndims - corr_vars;
+
     return 0;
 }
 
@@ -163,14 +185,14 @@ int PCA_transform(double **data_to_transform, int data_dim, int n_data, double *
     }
 
     int status = -12;
-    double **covar, *covar_storage;
+    double **covar = NULL, *covar_storage = NULL;
     covar_storage = (double *) malloc(data_dim * data_dim * sizeof(double));
     if (!covar_storage) {
         return MemoryError(__FUNCTION__);
     }
     covar = (double **) malloc(data_dim * sizeof(double *));
     if (!covar) {
-        free(covar_storage), covar_storage = nullptr;
+        free(covar_storage), covar_storage = NULL;
         status = MemoryError(__FUNCTION__);
         return status;
     }
@@ -194,8 +216,8 @@ int PCA_transform(double **data_to_transform, int data_dim, int n_data, double *
     mat eigvec;
     eig_sym(eigval, eigvec, cov_mat);
 
-    free(covar_storage), covar_storage = nullptr;
-    free(covar), covar = nullptr;
+    free(covar_storage), covar_storage = NULL;
+    free(covar), covar = NULL;
 
     for (int i = 0; i < 2; ++i) {
         for (int j = 0; j < n_data; ++j) {
@@ -207,6 +229,7 @@ int PCA_transform(double **data_to_transform, int data_dim, int n_data, double *
             new_space[i][j] = value;
         }
     }
+
     return 0;
 }
 
@@ -214,12 +237,14 @@ int cluster_size(cluster_report rep, int cluster_id, int n_data) {
     if (!rep.cidx) {
         exit(NullPointerError(__FUNCTION__));
     }
+
     int occurrence = 0;
     for (int i = 0; i < n_data; ++i) {
         if (rep.cidx[i] == cluster_id) {
             occurrence++;
         }
     }
+
     return occurrence;
 }
 
@@ -227,16 +252,17 @@ cluster_report run_K_means(double **dataset, int n_data, long k_max, double elbo
     if (!dataset) {
         exit(NullPointerError(__FUNCTION__));
     }
+
     mat data(2, n_data);
     mat final;
     cluster_report final_rep, previous_rep;
     previous_rep.cidx = (int *) malloc(n_data * sizeof(int));
-    if (previous_rep.cidx == nullptr) {
+    if (!previous_rep.cidx) {
         exit(MemoryError(__FUNCTION__));
     }
     final_rep.cidx = (int *) malloc(n_data * sizeof(int));
-    if (final_rep.cidx == nullptr) {
-        free(previous_rep.cidx), previous_rep.cidx = nullptr;
+    if (!final_rep.cidx) {
+        free(previous_rep.cidx), previous_rep.cidx = NULL;
         exit(MemoryError(__FUNCTION__));
     }
 
@@ -263,6 +289,7 @@ cluster_report run_K_means(double **dataset, int n_data, long k_max, double elbo
             final_rep.BetaCV = BetaCV(dataset, final_rep, n_data);
             if (fabs(previous_rep.BetaCV - final_rep.BetaCV) <= elbow_thr) {
                 cout << "The optimal K is " << final_rep.k << endl;
+                free(previous_rep.cidx), previous_rep.cidx = NULL;
                 return final_rep;
             } else {
                 previous_rep = final_rep;
@@ -270,6 +297,8 @@ cluster_report run_K_means(double **dataset, int n_data, long k_max, double elbo
         }
     }
     cout << "The optimal K is " << final_rep.k << endl;
+    free(previous_rep.cidx), previous_rep.cidx = NULL;
+
     return final_rep;
 }
 
@@ -277,6 +306,7 @@ int create_cidx_matrix(double **data, int n_data, cluster_report instance) {
     if (!data || instance.centroids.is_empty() || !(instance.cidx)) {
         return NullPointerError(__FUNCTION__);
     }
+
     for (int i = 0; i < n_data; ++i) {
         double min_dist = L2distance(instance.centroids(0,0), instance.centroids(1,0), data[0][i], data[1][i]);
         instance.cidx[i] = 0;
@@ -288,6 +318,7 @@ int create_cidx_matrix(double **data, int n_data, cluster_report instance) {
             }
         }
     }
+
     return 0;
 }
 
@@ -295,11 +326,13 @@ double WithinClusterWeight(double **data, cluster_report instance, int n_data) {
     if (!data || instance.centroids.is_empty() || !(instance.cidx)) {
         exit(NullPointerError(__FUNCTION__));
     }
+
     double wss = 0.0;
     for (int i = 0; i < n_data; ++i) {
         int cluster_idx = instance.cidx[i];
         wss += L2distance(instance.centroids(0,cluster_idx), instance.centroids(1,cluster_idx), data[0][i], data[1][i]);
     }
+
     return wss;
 }
 
@@ -307,6 +340,7 @@ double BetweenClusterWeight(double **data, cluster_report instance, int n_data) 
     if (!data || instance.centroids.is_empty()) {
         exit(NullPointerError(__FUNCTION__));
     }
+
     double pc1_mean = getMean(data[0], n_data);
     double pc2_mean = getMean(data[1], n_data);
     double bss = 0.0;
@@ -314,6 +348,7 @@ double BetweenClusterWeight(double **data, cluster_report instance, int n_data) 
         double n_points = cluster_size(instance, i, n_data);
         bss += n_points * L2distance(instance.centroids(0, i), instance.centroids(1, i), pc1_mean, pc2_mean);
     }
+
     return bss;
 }
 
@@ -323,6 +358,7 @@ int WithinClusterPairs(cluster_report instance, int n_data) {
         int n_points = cluster_size(instance, i, n_data);
         counter += (n_points - 1) * n_points;
     }
+
     return counter/2;
 }
 
@@ -336,6 +372,7 @@ int BetweenClusterPairs(cluster_report instance, int n_data) {
             }
         }
     }
+
     return counter/2;
 }
 
@@ -343,10 +380,12 @@ double BetaCV(double **data, cluster_report instance, int n_data) {
     if (!data) {
         exit(NullPointerError(__FUNCTION__));
     }
+
     double bss = BetweenClusterWeight(data, instance, n_data);
     double wss = WithinClusterWeight(data, instance, n_data);
     int N_in = WithinClusterPairs(instance, n_data);
     int N_out = BetweenClusterPairs(instance, n_data);
+
     return ((double) N_out / N_in) * (wss / bss);
 }
 
@@ -356,6 +395,7 @@ double L2distance(double xc, double yc, double x1, double y1) {
     double dist;
     dist = pow(x, 2) + pow(y, 2);
     dist = sqrt(dist);
+
     return dist;
 }
 
@@ -363,6 +403,7 @@ int computeActualClusterInfo(cluster_report rep, int n_data, int clusterID, bool
     if (!incircle || !subspace || !(rep.cidx) || rep.centroids.is_empty()) {
         exit(NullPointerError(__FUNCTION__));
     }
+
     dist = 0.0;
     int actual_cluster_size = 0;
     for (int l = 0; l < n_data; ++l) {
@@ -372,12 +413,15 @@ int computeActualClusterInfo(cluster_report rep, int n_data, int clusterID, bool
             actual_cluster_size++;
         }
     }
+
     return actual_cluster_size;
-};
+}
+
 int computeInliers(cluster_report rep, int n_data, int clusterID, bool *incircle, double **subspace, double radius) {
     if (!incircle || !subspace || !(rep.cidx) || rep.centroids.is_empty()) {
         exit(NullPointerError(__FUNCTION__));
     }
+
     int count = 0;
     for (int l = 0; l < n_data; ++l) {
         if (rep.cidx[l] == clusterID && !(incircle[l])) {
@@ -387,45 +431,21 @@ int computeInliers(cluster_report rep, int n_data, int clusterID, bool *incircle
             }
         }
     }
+
     return count;
-};
+}
 
 int countOutliers(bool **incircle, int uncorr_vars, int data_idx) {
     if (!incircle) {
         exit(NullPointerError(__FUNCTION__));
     }
+
     int count = 0;
     for (int j = 0; j < uncorr_vars; ++j) {
         if (!incircle[j][data_idx]) {
             count++;
         }
     }
+
     return count;
-};
-
-void csv_out_graphics(double **data, int n_data, string name, string outdir, bool *incircle, cluster_report report) {
-    fstream fout;
-    fout.open(outdir + name, ios::out | ios::trunc);
-
-    for (int i = 0; i < n_data; ++i) {
-        for (int j = 0; j < 2; ++j) {
-            fout << data[j][i] << ",";
-        }
-        if (incircle[i]) {
-            fout << "1,";
-        } else {
-            fout << "0,";
-        }
-        fout << report.cidx[i];
-        fout << "\n";
-    }
-
-    fout.close();
-    fstream fout2;
-    fout2.open(outdir + "centroids_" + name, ios::out | ios::trunc);
-    for (int i = 0; i < report.k; ++i) {
-        fout2 << report.centroids.at(0, i) << ",";
-        fout2 << report.centroids.at(1, i) << "\n";
-    }
-    fout2.close();
 }

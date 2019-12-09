@@ -15,7 +15,7 @@
  * A structure containing parameters read from command-line.
  */
 struct Params {
-    string       inputFilename = "../dataset/HTRU_2.csv"; /**< The path for the input CSV file. */
+    string       inputFilename = "./dataset/HTRU_2.csv"; /**< The path for the input CSV file. */
     string       outputFilename; /**< The path for the output file. */
     long         k_max = 10; /**< The maximum number of cluster to try for the K-Means algorithm. */
     double       elbowThreshold = 0.25; /**< The error tolerance for the selected metric to evaluate the elbow in K-means algorithm. */
@@ -62,9 +62,6 @@ int main(int argc, char **argv) {
     int N_DIMS; //Number of dimensions
     int N_DATA; //Number of observations
     double elapsed;
-    string outFile;
-    outFile = "../../Validation";
-    //outFile = "../plot/iris/";
     bool outputOnFile = false; //Flag for csv output generation
     fstream fout;
     Params params;
@@ -75,19 +72,18 @@ int main(int argc, char **argv) {
         exit(programStatus);
     }
 
-    params.outputFilename = outFile;
     outputOnFile = !(params.outputFilename.empty());
 
     printUsedParameters(params, outputOnFile);
 
-    double **data = nullptr, *data_storage = nullptr, **pearson = nullptr, *pearson_storage = nullptr, **corr = nullptr,
-    **newspace = nullptr, *newspace_storage = nullptr, *cs_storage = nullptr, **csi = nullptr, ***cs = nullptr,
-    **combine = nullptr, *combine_storage = nullptr;
-    bool **incircle = nullptr, *incircle_storage = nullptr;
-    int corr_vars, uncorr_vars, tot_outliers, *uncorr = nullptr;
+    double **data = NULL, *data_storage = NULL, **pearson = NULL, *pearson_storage = NULL, **corr = NULL,
+    **newspace = NULL, *newspace_storage = NULL, *cs_storage = NULL, **csi = NULL, ***cs = NULL,
+    **combine = NULL, *combine_storage = NULL;
+    bool **incircle = NULL, *incircle_storage = NULL;
+    int corr_vars, uncorr_vars, tot_outliers, *uncorr = NULL;
 
     /***
-     * The dataset in the input CSV file is read and loaded in "data".
+     * The dataset is read and loaded in "data" from the input CSV file.
      * Then each dimension in the dataset is centered around the mean value.
     ***/
     StartTheClock();
@@ -113,21 +109,27 @@ int main(int argc, char **argv) {
     if (programStatus) {
         goto ON_EXIT;
     }
-    cout << "Dataset Loaded" << endl;
+
+    if (!outputOnFile) {
+        cout << "Dataset Loaded" << endl;
+    }
 
     programStatus = Standardize_dataset(data, N_DIMS, N_DATA);
     if (programStatus) {
         goto ON_EXIT;
     }
-    cout << "Dataset standardized" << endl;
+
+    if (!outputOnFile) {
+        cout << "Dataset standardized" << endl;
+    }
 
     /***
-     * The Pearson Coefficient is computed on each dimensions pair in order
+     * The Pearson Coefficient is computed on each pair of dimensions in order
      * to partition the dimensions in CORR and UNCORR sets (CORR U UNCORR = DIMS).
-     * The partitions are computed with the evaluation of the Pearson coefficient
+     * Partitions are computed with the evaluation of the Pearson coefficient
      * row-wise sum for each dimension. If the value is greater than or equal to
-     * zero, then the dimension is saved in "corr", otherwise the index of the
-     * dimension is saved in "uncorr".
+     * zero, then the dimension is stored in "CORR", otherwise the index of the
+     * dimension is stored in "UNCORR".
     ***/
     pearson_storage = (double *) malloc(N_DIMS * N_DIMS * sizeof(double));
     if (!pearson_storage) {
@@ -147,7 +149,10 @@ int main(int argc, char **argv) {
     if (programStatus) {
         goto ON_EXIT;
     }
-    cout << "Pearson Correlation Coefficient computed" << endl;
+
+    if (!outputOnFile) {
+        cout << "Pearson Correlation Coefficient computed" << endl;
+    }
 
     programStatus = computeCorrUncorrCardinality(pearson, N_DIMS, corr_vars, uncorr_vars);
     if (programStatus) {
@@ -186,14 +191,17 @@ int main(int argc, char **argv) {
 
     free(pearson_storage), pearson_storage = nullptr;
     free(pearson), pearson = nullptr;
-    cout << "Correlated dimensions: " << corr_vars << ", " << "Uncorrelated dimensions: " << uncorr_vars << endl;
+
+    if (!outputOnFile) {
+        cout << "Correlated dimensions: " << corr_vars << ", " << "Uncorrelated dimensions: " << uncorr_vars << endl;
+    }
 
     /***
      * The Principal Component Analysis is computed on CORR set and the result
-     * is saved in "newspace".
+     * is stored in "newspace".
      * Then the candidate subspaces are created with the combination of newspace
-     * and each dimension in UNCORR set; this combination is saved in "combine"
-     * in order to pass this structure to the PCA function. This result is saved
+     * and each dimension in the UNCORR set; this combination is stored in "combine"
+     * in order to pass this structure to the PCA function. The PCA result is stored
      * in "cs".
     ***/
     newspace_storage = (double *) malloc(N_DATA * 2 * sizeof(double));
@@ -215,7 +223,10 @@ int main(int argc, char **argv) {
         goto ON_EXIT;
     }
     free(corr), corr = nullptr;
-    cout << "PCA computed on CORR subspace" << endl;
+
+    if (!outputOnFile) {
+        cout << "PCA computed on CORR subspace" << endl;
+    }
 
     cs_storage = (double *) malloc(N_DATA * 2 * uncorr_vars * sizeof(double));
     if (!cs_storage) {
@@ -265,7 +276,10 @@ int main(int argc, char **argv) {
         if (programStatus) {
             goto ON_EXIT;
         }
-        cout << "PCA computed on PC1_CORR, PC2_CORR and " << i+1 << "-th dimension of UNCORR" << endl;
+
+        if (!outputOnFile) {
+            cout << "PCA computed on PC1_CORR, PC2_CORR and " << i + 1 << "-th dimension of UNCORR" << endl;
+        }
     }
 
     free(uncorr), uncorr = nullptr;
@@ -274,16 +288,16 @@ int main(int argc, char **argv) {
 
     /***
      * The K-Means with the elbow criterion is executed for each candidate subspace.
-     * The structure "incircle" keep records of the inliers for each candidate subspace.
+     * The structure "incircle" keeps record of the inliers for each candidate subspace.
      * Then the outlier identification process starts:
      * 1) For each cluster, the cluster size is computed to define a threshold on the
      *      number of inliers;
-     * 2) Iteratively, the distance between the centroids and the points in the cluster
-     *      and the cluster size (without the inliers excluded in the previous iteration)
+     * 2) Iteratively, the cluster size (without the inliers excluded in the previous
+     *      iteration) and the distance between the centroids and the points in the cluster
      *      are computed.
      * 3) The radius of the circle for inliers evaluation is computed and a new set of
      *      inliers is discarded based on that radius.
-     * The outlier identification process ends with the general evaluation: if a data is
+     * The outlier identification process ends with the general point-wise evaluation: if a data is
      * an outlier for a chosen percentage of subspaces then it is marked as general outlier.
     ***/
     incircle_storage = (bool *) calloc(uncorr_vars * N_DATA, sizeof(bool));
@@ -302,8 +316,11 @@ int main(int argc, char **argv) {
 
     for (int i = 0; i < uncorr_vars; ++i) {
         cluster_report rep;
-        cout << "Candidate Subspace " << i+1 << ": ";
-        rep = run_K_means(cs[i], N_DATA, params.k_max, params.elbowThreshold); //Clustering through Elbow criterion on i-th candidate subspace
+        if (!outputOnFile) {
+            cout << "Candidate Subspace " << i + 1 << ": ";
+        }
+        rep = run_K_means(cs[i], N_DATA, params.k_max,
+                          params.elbowThreshold); //Clustering through Elbow criterion on i-th candidate subspace
         for (int j = 0; j < rep.k; ++j) {
             int k = 0, previous_k = 0;
             int cls_size = cluster_size(rep, j, N_DATA);
@@ -311,44 +328,43 @@ int main(int argc, char **argv) {
                 previous_k = k;
                 double dist = 0.0;
                 int actual_cluster_size = computeActualClusterInfo(rep, N_DATA, j, incircle[i], cs[i], dist);
-                double dist_mean = dist / actual_cluster_size;
+                double dist_mean = dist / (double) actual_cluster_size;
                 k += computeInliers(rep, N_DATA, j, incircle[i], cs[i], dist_mean);
-                //Stopping criterion when the data threshold is greater than remaining n_points in a cluster
+                //Stopping criterion
                 if (k == previous_k) {
                     break;
                 }
             }
         }
-//        if (outputOnFile) {
-//            string fileoutname = "dataout";
-//            string num = to_string(i);
-//            string concat = fileoutname + num + ".csv";
-//            csv_out_graphics(cs[i], N_DATA, concat, outFile, incircle[i], rep);
-//        }
-        cout << "CENTROIDS" << endl;
-        rep.centroids.print();
-    }
-
-    cout << "Outliers Identification Process: \n";
-
-    tot_outliers = 0;
-    for (int i = 0; i < N_DATA; ++i) {
-        int occurrence = countOutliers(incircle, uncorr_vars, i);
-        if (occurrence >= std::round(uncorr_vars * params.percentageSubspaces)) {
-            tot_outliers++;
-            cout << i << ") ";
-            for (int l = 0; l < N_DIMS; ++l) {
-                //cout << cs[0][l][i] << " ";
-                cout << data[l][i] << " ";
-            }
-            cout << "(" << occurrence << ")\n";
+        if (!outputOnFile) {
+            cout << "CENTROIDS" << endl;
+            rep.centroids.print();
         }
     }
 
-    cout << "TOTAL NUMBER OF OUTLIERS: " << tot_outliers << endl;
+    if (!outputOnFile) {
+        cout << "Outliers Identification Process: \n";
 
+        tot_outliers = 0;
+        for (int i = 0; i < N_DATA; ++i) {
+            int occurrence = countOutliers(incircle, uncorr_vars, i);
+            if (occurrence >= std::round(uncorr_vars * params.percentageSubspaces)) {
+                tot_outliers++;
+                cout << i << ") ";
+                for (int l = 0; l < N_DIMS; ++l) {
+                    //cout << cs[0][l][i] << " ";
+                    cout << data[l][i] << " ";
+                }
+                cout << "(" << occurrence << ")\n";
+            }
+        }
+
+        cout << "TOTAL NUMBER OF OUTLIERS: " << tot_outliers << endl;
+    }
+
+    // Output file generation for metrics evaluation
     if (outputOnFile) {
-        fout.open(outFile + "/HTRU_2Sequential.csv", ios::out | ios::trunc);
+        fout.open(params.outputFilename, ios::out | ios::trunc);
         for (int i = 0; i < N_DATA; ++i) {
             int occurrence = countOutliers(incircle, uncorr_vars, i);
             if (occurrence >= std::round(uncorr_vars * params.percentageSubspaces)) {
@@ -359,7 +375,9 @@ int main(int argc, char **argv) {
     }
 
     elapsed = StopTheClock();
-    cout << "Elapsed time (seconds): " << elapsed << endl;
+    if (outputOnFile) {
+        cout << "Elapsed time (seconds): " << elapsed << endl;
+    }
     programStatus = 0;
 
     ON_EXIT:
