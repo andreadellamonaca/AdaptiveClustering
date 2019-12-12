@@ -15,7 +15,7 @@
  * A structure containing parameters read from command-line.
  */
 struct Params {
-    string       inputFilename = "./dataset/HTRU_2.csv"; /**< The path for the input CSV file. */
+    string       inputFilename = "../dataset/Iris.csv"; /**< The path for the input CSV file. */
     string       outputFilename; /**< The path for the output file. */
     long         k_max = 10; /**< The maximum number of cluster to try for the K-Means algorithm. */
     double       elbowThreshold = 0.25; /**< The error tolerance for the selected metric to evaluate the elbow in K-means algorithm. */

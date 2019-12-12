@@ -255,14 +255,10 @@ cluster_report run_K_means(double **dataset, int n_data, long k_max, double elbo
 
     mat data(2, n_data);
     mat final;
-    cluster_report final_rep, previous_rep;
-    previous_rep.cidx = (int *) malloc(n_data * sizeof(int));
-    if (!previous_rep.cidx) {
-        exit(MemoryError(__FUNCTION__));
-    }
+    double previous_BetaCV = 0.0;
+    cluster_report final_rep;
     final_rep.cidx = (int *) malloc(n_data * sizeof(int));
     if (!final_rep.cidx) {
-        free(previous_rep.cidx), previous_rep.cidx = NULL;
         exit(MemoryError(__FUNCTION__));
     }
 
@@ -277,27 +273,20 @@ cluster_report run_K_means(double **dataset, int n_data, long k_max, double elbo
             cout << "Error in KMeans run." << endl;
             exit(-1);
         }
-        if (j == 1) {
-            previous_rep.centroids = final;
-            previous_rep.k = j;
-            previous_rep.BetaCV = 0.0;
-            fill_n(previous_rep.cidx, n_data, 0);
-        } else {
+        if (j > 1) {
             final_rep.centroids = final;
             final_rep.k = j;
             create_cidx_matrix(dataset, n_data, final_rep);
             final_rep.BetaCV = BetaCV(dataset, final_rep, n_data);
-            if (fabs(previous_rep.BetaCV - final_rep.BetaCV) <= elbow_thr) {
+            if (fabs(previous_BetaCV - final_rep.BetaCV) <= elbow_thr) {
                 cout << "The optimal K is " << final_rep.k << endl;
-                free(previous_rep.cidx), previous_rep.cidx = NULL;
                 return final_rep;
             } else {
-                previous_rep = final_rep;
+                previous_BetaCV = final_rep.BetaCV;
             }
         }
     }
     cout << "The optimal K is " << final_rep.k << endl;
-    free(previous_rep.cidx), previous_rep.cidx = NULL;
 
     return final_rep;
 }

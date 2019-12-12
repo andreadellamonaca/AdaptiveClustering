@@ -116,7 +116,7 @@ extern int cluster_size(cluster_report rep, int cluster_id, int n_data);
 /**
  * This function runs the K-Means with the elbow criterion; it tries different number of clusters and
  * evaluates the instance of K-Means through the BetaCV metric in order to find the optimal number of clusters.
- * This function exits with code -2 if dataset is NULL.
+ * This function exits with code -2 if dataset is NULL or -1 for memory allocation for rep.cidx.
  * @param [in] dataset a matrix [2, n_data] containing the data for K-Means run.
  * @param [in] n_data the number of data in dataset.
  * @param [in] k_max the max number of clusters to try for elbow criterion.
