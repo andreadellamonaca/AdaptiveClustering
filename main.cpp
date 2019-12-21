@@ -15,13 +15,14 @@
  * A structure containing parameters read from command-line.
  */
 struct Params {
-    string       inputFilename = "../dataset/Iris.csv"; /**< The path for the input CSV file. */
+    string       inputFilename = "../dataset/dim032.csv"; /**< The path for the input CSV file. */
     string       outputFilename; /**< The path for the output file. */
     long         k_max = 10; /**< The maximum number of cluster to try for the K-Means algorithm. */
     double       elbowThreshold = 0.25; /**< The error tolerance for the selected metric to evaluate the elbow in K-means algorithm. */
     double       percentageIncircle = 0.9; /**< The percentage of points in a cluster to be considered as inliers. */
     double       percentageSubspaces = 0.8; /**< The percentage of subspace in which a point must be evaluated as outlier to be
  *                                          selected as general outlier. */
+    int          version = 1; /**< 0 for standard K-Means and 1 for K-Means++. */
 };
 
 chrono::high_resolution_clock::time_point t1, t2;
@@ -92,11 +93,11 @@ int main(int argc, char **argv) {
     if (programStatus) {
         return programStatus;
     }
-    data_storage = (double *) malloc(N_DIMS * N_DATA * sizeof(double));
+    data_storage = (double *) calloc(N_DIMS * N_DATA, sizeof(double));
     if (!data_storage) {
         return MemoryError(__FUNCTION__);
     }
-    data = (double **) malloc(N_DIMS * sizeof(double *));
+    data = (double **) calloc(N_DIMS, sizeof(double *));
     if (!data) {
         programStatus = MemoryError(__FUNCTION__);
         goto ON_EXIT;
@@ -131,12 +132,12 @@ int main(int argc, char **argv) {
      * zero, then the dimension is stored in "CORR", otherwise the index of the
      * dimension is stored in "UNCORR".
     ***/
-    pearson_storage = (double *) malloc(N_DIMS * N_DIMS * sizeof(double));
+    pearson_storage = (double *) calloc(N_DIMS * N_DIMS, sizeof(double));
     if (!pearson_storage) {
         programStatus = MemoryError(__FUNCTION__);
         goto ON_EXIT;
     }
-    pearson = (double **) malloc(N_DIMS * sizeof(double *));
+    pearson = (double **) calloc(N_DIMS, sizeof(double *));
     if (!pearson) {
         programStatus = MemoryError(__FUNCTION__);
         goto ON_EXIT;
@@ -167,12 +168,12 @@ int main(int argc, char **argv) {
         goto ON_EXIT;
     }
 
-    corr = (double **) malloc(corr_vars * sizeof(double *));
+    corr = (double **) calloc(corr_vars, sizeof(double *));
     if (!corr) {
         programStatus = MemoryError(__FUNCTION__);
         goto ON_EXIT;
     }
-    uncorr = (int *) (malloc(uncorr_vars * sizeof(int)));
+    uncorr = (int *) (calloc(uncorr_vars, sizeof(int)));
     if (!uncorr) {
         programStatus = MemoryError(__FUNCTION__);
         goto ON_EXIT;
@@ -189,8 +190,10 @@ int main(int argc, char **argv) {
         }
     }
 
-    free(pearson_storage), pearson_storage = nullptr;
-    free(pearson), pearson = nullptr;
+    if(pearson_storage)
+        free(pearson_storage), pearson_storage = NULL;
+
+    free(pearson), pearson = NULL;
 
     if (!outputOnFile) {
         cout << "Correlated dimensions: " << corr_vars << ", " << "Uncorrelated dimensions: " << uncorr_vars << endl;
@@ -204,12 +207,12 @@ int main(int argc, char **argv) {
      * in order to pass this structure to the PCA function. The PCA result is stored
      * in "cs".
     ***/
-    newspace_storage = (double *) malloc(N_DATA * 2 * sizeof(double));
+    newspace_storage = (double *) calloc(N_DATA * 2, sizeof(double));
     if (!newspace_storage) {
         programStatus = MemoryError(__FUNCTION__);
         goto ON_EXIT;
     }
-    newspace = (double **) malloc(2 * sizeof(double *));
+    newspace = (double **) calloc(2, sizeof(double *));
     if (!newspace) {
         programStatus = MemoryError(__FUNCTION__);
         goto ON_EXIT;
@@ -222,23 +225,24 @@ int main(int argc, char **argv) {
     if (programStatus) {
         goto ON_EXIT;
     }
-    free(corr), corr = nullptr;
+
+    free(corr), corr = NULL;
 
     if (!outputOnFile) {
         cout << "PCA computed on CORR subspace" << endl;
     }
 
-    cs_storage = (double *) malloc(N_DATA * 2 * uncorr_vars * sizeof(double));
+    cs_storage = (double *) calloc(N_DATA * 2 * uncorr_vars, sizeof(double));
     if (!cs_storage) {
         programStatus = MemoryError(__FUNCTION__);
         goto ON_EXIT;
     }
-    csi = (double **) malloc(2 * uncorr_vars * sizeof(double *));
+    csi = (double **) calloc(2 * uncorr_vars, sizeof(double *));
     if (!csi) {
         programStatus = MemoryError(__FUNCTION__);
         goto ON_EXIT;
     }
-    cs = (double ***) malloc(uncorr_vars * sizeof(double **));
+    cs = (double ***) calloc(uncorr_vars, sizeof(double **));
     if (!cs) {
         programStatus = MemoryError(__FUNCTION__);
         goto ON_EXIT;
@@ -250,12 +254,12 @@ int main(int argc, char **argv) {
         cs[i] = &csi[i * 2];
     }
 
-    combine_storage = (double *) malloc(N_DATA * 3 * sizeof(double));
+    combine_storage = (double *) calloc(N_DATA * 3, sizeof(double));
     if (!combine_storage) {
         programStatus = MemoryError(__FUNCTION__);
         goto ON_EXIT;
     }
-    combine = (double **) malloc(3 * sizeof(double *));
+    combine = (double **) calloc(3, sizeof(double *));
     if (!combine) {
         programStatus = MemoryError(__FUNCTION__);
         goto ON_EXIT;
@@ -267,8 +271,9 @@ int main(int argc, char **argv) {
     memcpy(combine[0], newspace[0], N_DATA * sizeof(double));
     memcpy(combine[1], newspace[1], N_DATA * sizeof(double));
 
-    free(newspace_storage), newspace_storage = nullptr;
-    free(newspace), newspace = nullptr;
+
+    free(newspace_storage), newspace_storage = NULL;
+    free(newspace), newspace = NULL;
 
     for (int i = 0; i < uncorr_vars; ++i) {
         memcpy(combine[2], data[uncorr[i]], N_DATA * sizeof(double));
@@ -282,9 +287,9 @@ int main(int argc, char **argv) {
         }
     }
 
-    free(uncorr), uncorr = nullptr;
-    free(combine_storage), combine_storage = nullptr;
-    free(combine), combine = nullptr;
+    free(uncorr), uncorr = NULL;
+    free(combine_storage), combine_storage = NULL;
+    free(combine), combine = NULL;
 
     /***
      * The K-Means with the elbow criterion is executed for each candidate subspace.
@@ -305,7 +310,7 @@ int main(int argc, char **argv) {
         programStatus = MemoryError(__FUNCTION__);
         goto ON_EXIT;
     }
-    incircle = (bool **) malloc(uncorr_vars * sizeof(bool *));
+    incircle = (bool **) calloc(uncorr_vars, sizeof(bool *));
     if (!incircle) {
         programStatus = MemoryError(__FUNCTION__);
         goto ON_EXIT;
@@ -319,8 +324,8 @@ int main(int argc, char **argv) {
         if (!outputOnFile) {
             cout << "Candidate Subspace " << i + 1 << ": ";
         }
-        rep = run_K_means(cs[i], N_DATA, params.k_max,
-                          params.elbowThreshold); //Clustering through Elbow criterion on i-th candidate subspace
+        //Clustering through Elbow criterion on i-th candidate subspace
+        rep = run_K_means(cs[i], N_DATA, params.k_max, params.elbowThreshold, params.version);
         for (int j = 0; j < rep.k; ++j) {
             int k = 0, previous_k = 0;
             int cls_size = cluster_size(rep, j, N_DATA);
@@ -382,36 +387,56 @@ int main(int argc, char **argv) {
 
     ON_EXIT:
 
-    if (data != nullptr)
-        free(data), data = nullptr;
-    if (data_storage != nullptr)
-        free(data_storage), data_storage = nullptr;
-    if (pearson != nullptr)
-        free(pearson), pearson = nullptr;
-    if (pearson_storage != nullptr)
-        free(pearson_storage), pearson_storage = nullptr;
-    if (newspace != nullptr)
-        free(newspace), newspace = nullptr;
-    if (newspace_storage != nullptr)
-        free(newspace_storage), newspace_storage = nullptr;
-    if (corr != nullptr)
-        free(corr), corr = nullptr;
-    if (uncorr != nullptr)
-        free(uncorr), uncorr = nullptr;
-    if (combine != nullptr)
-        free(combine), combine = nullptr;
-    if (combine_storage != nullptr)
-        free(combine_storage), combine_storage = nullptr;
-    if (incircle != nullptr)
-        free(incircle), incircle = nullptr;
-    if (incircle_storage != nullptr)
-        free(incircle_storage), incircle_storage = nullptr;
-    if (cs != nullptr)
-        free(cs), cs = nullptr;
-    if (csi != nullptr)
-        free(csi), csi = nullptr;
-    if (cs_storage != nullptr)
-        free(cs_storage), cs_storage = nullptr;
+
+    if (data != NULL)
+        free(data), data = NULL;
+
+    if (data_storage != NULL)
+        free(data_storage), data_storage = NULL;
+
+    if (pearson_storage != NULL)
+        free(pearson_storage), pearson_storage = NULL;
+
+    if (pearson != NULL)
+        free(pearson), pearson = NULL;
+
+    if (newspace != NULL){
+        for (int i = 0; i < 2; ++i)
+            if(newspace[i])
+                free(newspace[i]), newspace[i] = NULL;
+
+        free(newspace), newspace = NULL;
+    }
+
+    if (newspace_storage != NULL)
+        free(newspace_storage), newspace_storage = NULL;
+
+    if (corr != NULL)
+        free(corr), corr = NULL;
+
+    if (uncorr != NULL)
+        free(uncorr), uncorr = NULL;
+
+    if (combine_storage != NULL)
+           free(combine_storage), combine_storage = NULL;
+
+    if (combine != NULL)
+        free(combine), combine = NULL;
+
+    if (incircle_storage != NULL)
+        free(incircle_storage), incircle_storage = NULL;
+
+    if (incircle != NULL)
+        free(incircle), incircle = NULL;
+
+    if (csi != NULL)
+        free(csi), csi = NULL;
+
+    if (cs_storage != NULL)
+        free(cs_storage), cs_storage = NULL;
+
+    if (cs != NULL)
+       free(cs), cs = NULL;
 
     return programStatus;
 }
@@ -434,7 +459,8 @@ void usage(char* cmd) {
             << "-et         threshold for the selection of optimal number of clusters in Elbow method" << endl
             << "-pi         percentage of points in a cluster to be evaluated as inlier" << endl
             << "-ps         percentage of subspaces in which a point must be outlier to be evaluated as general outlier" << endl
-            << "-if         input filename" << endl;
+            << "-if         input filename" << endl
+            << "-v          K-Means version: 0 for standard K-Means and 1 for K-Means++" << endl;
 }
 
 int parseCommandLine(int argc, char **argv, Params &params) {
@@ -481,6 +507,13 @@ int parseCommandLine(int argc, char **argv, Params &params) {
                 return ArgumentsError(__FUNCTION__);
             }
             params.inputFilename = string(argv[i]);
+        } else if (strcmp(argv[i], "-v") == 0) {
+            i++;
+            if (i >= argc) {
+                cerr << "Missing K-Means version.\n";
+                return ArgumentsError(__FUNCTION__);
+            }
+            params.inputFilename = string(argv[i]);
         } else {
             usage(argv[0]);
             return ArgumentsError(__FUNCTION__);
@@ -498,5 +531,6 @@ void printUsedParameters(Params params, bool outputOnFile) {
     cout << "percentage in circle = " << params.percentageIncircle << endl;
     cout << "elbow threshold = " << params.elbowThreshold << endl;
     cout << "percentage subspaces = " << params.percentageSubspaces << endl;
+    cout << "K-Means Version = " << params.version << endl;
     cout << "k_max = " << params.k_max << endl << endl;
 }

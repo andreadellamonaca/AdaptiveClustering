@@ -123,7 +123,16 @@ extern int cluster_size(cluster_report rep, int cluster_id, int n_data);
  * @param [in] elbow_thr the error tolerance for BetaCV metric.
  * @return a cluster_report containing the result of the K-Means run.
  */
-extern cluster_report run_K_means(double **dataset, int n_data, long k_max, double elbow_thr);
+extern cluster_report run_K_means(double **dataset, int n_data, long k_max, double elbow_thr, int kmeans_version);
+/**
+ * This function computes the centroids initialization for K-Means++.
+ * @param [in] n_data the number of data.
+ * @param [in] nCluster the number of centroids to initialize.
+ * @param [in] dataset a matrix [2, n_data] containing the data to clusterize.
+ * @param [in,out] final a mat structure (from Armadillo) to fill with the centroids.
+ * @return 0 if it is correct, -2 if dataset is NULL.
+ */
+int kmeansPPinitialization(int n_data, int nCluster, double **dataset,mat &final);
 /**
  * The algorithm creates the array [1, N_DATA] which indicates the membership of each data to a cluster through an integer.
  * @param [in] data a matrix [n_data, n_dims] on which the K-Means run was made.

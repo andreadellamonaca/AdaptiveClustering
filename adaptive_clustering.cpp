@@ -186,11 +186,11 @@ int PCA_transform(double **data_to_transform, int data_dim, int n_data, double *
 
     int status = -12;
     double **covar = NULL, *covar_storage = NULL;
-    covar_storage = (double *) malloc(data_dim * data_dim * sizeof(double));
+    covar_storage = (double *) calloc(data_dim * data_dim, sizeof(double));
     if (!covar_storage) {
         return MemoryError(__FUNCTION__);
     }
-    covar = (double **) malloc(data_dim * sizeof(double *));
+    covar = (double **) calloc(data_dim, sizeof(double *));
     if (!covar) {
         free(covar_storage), covar_storage = NULL;
         status = MemoryError(__FUNCTION__);
@@ -248,7 +248,7 @@ int cluster_size(cluster_report rep, int cluster_id, int n_data) {
     return occurrence;
 }
 
-cluster_report run_K_means(double **dataset, int n_data, long k_max, double elbow_thr) {
+cluster_report run_K_means(double **dataset, int n_data, long k_max, double elbow_thr, int kmeans_version) {
     if (!dataset) {
         exit(NullPointerError(__FUNCTION__));
     }
@@ -267,15 +267,26 @@ cluster_report run_K_means(double **dataset, int n_data, long k_max, double elbo
             data(j,i) = dataset[j][i];
         }
     }
-    for (int j = 1; j <= k_max; ++j) {
-        bool status = kmeans(final, data, j, random_subset, 30, false);
-        if (!status) {
-            cout << "Error in KMeans run." << endl;
-            exit(-1);
+    for (int nCluster = 1; nCluster <= k_max; ++nCluster) {
+        if (kmeans_version) {
+            kmeansPPinitialization(n_data, nCluster, dataset, final);
+            bool status = kmeans(final, data, nCluster, keep_existing, 30, false);
+            if (!status) {
+                cout << "Error in KMeans run." << endl;
+                exit(-1);
+            }
         }
-        if (j > 1) {
+        else {
+            bool status = kmeans(final, data, nCluster, random_subset, 30, false);
+            if (!status) {
+                cout << "Error in KMeans run." << endl;
+                exit(-1);
+            }
+        }
+
+        if (nCluster > 1) {
             final_rep.centroids = final;
-            final_rep.k = j;
+            final_rep.k = nCluster;
             create_cidx_matrix(dataset, n_data, final_rep);
             final_rep.BetaCV = BetaCV(dataset, final_rep, n_data);
             if (fabs(previous_BetaCV - final_rep.BetaCV) <= elbow_thr) {
@@ -289,6 +300,41 @@ cluster_report run_K_means(double **dataset, int n_data, long k_max, double elbo
     cout << "The optimal K is " << final_rep.k << endl;
 
     return final_rep;
+}
+
+int kmeansPPinitialization(int n_data, int nCluster, double **dataset, mat &final) {
+    if (!dataset) {
+        return NullPointerError(__FUNCTION__);
+    }
+
+    std::random_device rd; // obtain a random number from hardware
+    std::mt19937 eng(rd()); // seed the generator
+    std::uniform_int_distribution<> distr(0, n_data); // define the range
+    int first_centroid = distr(eng);
+    final.reshape(2, nCluster);
+    final(0, 0) = dataset[0][first_centroid];
+    final(1, 0) = dataset[1][first_centroid];
+    for (int centrToSet = 1; centrToSet < nCluster; ++centrToSet) {
+        int chosenData;
+        double max_dist = -1.0;
+        for (int k = 0; k < n_data; ++k) {
+            double min_dist = L2distance(final(0, 0), final(1, 0), dataset[0][k], dataset[1][k]);;
+            for (int centroidID = 1; centroidID < centrToSet; ++centroidID) {
+                double dist = L2distance(final(0, centroidID), final(1, centroidID), dataset[0][k], dataset[1][k]);
+                if (dist < min_dist) {
+                    min_dist = dist;
+                }
+            }
+            if (min_dist > max_dist) {
+                chosenData = k;
+                max_dist = min_dist;
+            }
+        }
+        final(0, centrToSet) = dataset[0][chosenData];
+        final(1, centrToSet) = dataset[1][chosenData];
+    }
+
+    return 0;
 }
 
 int create_cidx_matrix(double **data, int n_data, cluster_report instance) {
