@@ -15,7 +15,7 @@
  * A structure containing parameters read from command-line.
  */
 struct Params {
-    string       inputFilename = "../dataset/dim032.csv"; /**< The path for the input CSV file. */
+    string       inputFilename = "../dataset/Iris.csv"; /**< The path for the input CSV file. */
     string       outputFilename; /**< The path for the output file. */
     long         k_max = 10; /**< The maximum number of cluster to try for the K-Means algorithm. */
     double       elbowThreshold = 0.25; /**< The error tolerance for the selected metric to evaluate the elbow in K-means algorithm. */
@@ -355,16 +355,11 @@ int main(int argc, char **argv) {
             int occurrence = countOutliers(incircle, uncorr_vars, i);
             if (occurrence >= std::round(uncorr_vars * params.percentageSubspaces)) {
                 tot_outliers++;
-                cout << i << ") ";
-                for (int l = 0; l < N_DIMS; ++l) {
-                    //cout << cs[0][l][i] << " ";
-                    cout << data[l][i] << " ";
-                }
-                cout << "(" << occurrence << ")\n";
+                cout << i << " (" << occurrence << "), ";
             }
         }
 
-        cout << "TOTAL NUMBER OF OUTLIERS: " << tot_outliers << endl;
+        cout << endl << "TOTAL NUMBER OF OUTLIERS: " << tot_outliers << endl;
     }
 
     // Output file generation for metrics evaluation
@@ -513,7 +508,7 @@ int parseCommandLine(int argc, char **argv, Params &params) {
                 cerr << "Missing K-Means version.\n";
                 return ArgumentsError(__FUNCTION__);
             }
-            params.inputFilename = string(argv[i]);
+            params.version = stoi(argv[i]);
         } else {
             usage(argv[0]);
             return ArgumentsError(__FUNCTION__);

@@ -114,6 +114,14 @@ extern int PCA_transform(double **data_to_transform, int data_dim, int n_data, d
  */
 extern int cluster_size(cluster_report rep, int cluster_id, int n_data);
 /**
+ * This function finds the cluster with the minimum distance to a given point.
+ * @param [in] centroids mat structure [2, nClusters] (from Armadillo).
+ * @param [in] first_coordinate the first component of the point.
+ * @param [in] second_coordinate the second component of the point.
+ * @return an index between 0 and (centroids.n_cols-1). The program exits with -2 if centroids is empty.
+ */
+extern int mindistCluster(mat centroids, double first_coordinate, double second_coordinate);
+/**
  * This function runs the K-Means with the elbow criterion; it tries different number of clusters and
  * evaluates the instance of K-Means through the BetaCV metric in order to find the optimal number of clusters.
  * This function exits with code -2 if dataset is NULL or -1 for memory allocation for rep.cidx.

@@ -248,13 +248,30 @@ int cluster_size(cluster_report rep, int cluster_id, int n_data) {
     return occurrence;
 }
 
+int mindistCluster(mat centroids, double first_coordinate, double second_coordinate) {
+    if (centroids.is_empty()) {
+        exit(NullPointerError(__FUNCTION__));
+    }
+
+    double min_dist = L2distance(centroids(0,0), centroids(1,0), first_coordinate, second_coordinate);
+    int index = 0;
+
+    for (int j = 1; j < centroids.n_cols; ++j) {
+        double new_dist = L2distance(centroids(0,j), centroids(1,j), first_coordinate, second_coordinate);
+        if (new_dist < min_dist) {
+            min_dist = new_dist;
+            index = j;
+        }
+    }
+
+    return index;
+}
+
 cluster_report run_K_means(double **dataset, int n_data, long k_max, double elbow_thr, int kmeans_version) {
     if (!dataset) {
         exit(NullPointerError(__FUNCTION__));
     }
 
-    mat data(2, n_data);
-    mat final;
     double previous_BetaCV = 0.0;
     cluster_report final_rep;
     final_rep.cidx = (int *) malloc(n_data * sizeof(int));
@@ -262,27 +279,72 @@ cluster_report run_K_means(double **dataset, int n_data, long k_max, double elbo
         exit(MemoryError(__FUNCTION__));
     }
 
-    for (int j = 0; j < 2; j++) {
-        for (int i = 0; i < n_data; ++i) {
-            data(j,i) = dataset[j][i];
-        }
-    }
     for (int nCluster = 1; nCluster <= k_max; ++nCluster) {
+        mat final(2, nCluster);
         if (kmeans_version) {
             kmeansPPinitialization(n_data, nCluster, dataset, final);
-            bool status = kmeans(final, data, nCluster, keep_existing, 30, false);
-            if (!status) {
-                cout << "Error in KMeans run." << endl;
-                exit(-1);
-            }
         }
         else {
-            bool status = kmeans(final, data, nCluster, random_subset, 30, false);
-            if (!status) {
-                cout << "Error in KMeans run." << endl;
-                exit(-1);
-            }
+            final = randu<mat>(2, nCluster);
         }
+
+        bool converged = false;
+        double* localsum_storage = (double *) calloc(2 * nCluster, sizeof(double));
+        if (!localsum_storage) {
+            exit(MemoryError(__FUNCTION__));
+        }
+
+        double** localsum = (double **) malloc(nCluster * sizeof(double *));
+        if (!localsum) {
+            free(localsum_storage), localsum_storage = NULL;
+            exit(MemoryError(__FUNCTION__));
+        }
+
+        for (int i = 0; i < nCluster; ++i) {
+            localsum[i] = &localsum_storage[i * 2];
+        }
+
+        double* weights = (double *) calloc(nCluster, sizeof(double));
+        if (!weights) {
+            for (int i = 0; i < nCluster; ++i) {
+                free(localsum[i]), localsum[i] = NULL;
+            }
+            free(localsum_storage), localsum_storage = NULL;
+            exit(MemoryError(__FUNCTION__));
+        }
+
+        double prev_error;
+        double error = numeric_limits<double>::max();
+
+        while (!converged) {
+            prev_error = error;
+            error = 0.0;
+            fill_n(weights, nCluster, 0.0);
+            fill_n(localsum_storage, 2 * nCluster, 0.0);
+
+            for (int k = 0; k < n_data; ++k) {
+                int clusterid = mindistCluster(final, dataset[0][k], dataset[1][k]);
+
+                weights[clusterid] += 1;
+                localsum[clusterid][0] += dataset[0][k];
+                localsum[clusterid][1] += dataset[1][k];
+                error += pow(L2distance(final(0, clusterid), final(1, clusterid), dataset[0][k], dataset[1][k]), 2);
+            }
+
+            for (int clusterID = 0; clusterID < nCluster; ++clusterID) {
+                if(weights[clusterID] != 0) {
+                    final(0, clusterID) = localsum[clusterID][0] / weights[clusterID];
+                    final(1, clusterID) = localsum[clusterID][1] / weights[clusterID];
+                }
+            }
+
+            //check convergence
+            converged = (((prev_error - error) / prev_error) <= 0.0001);
+        }
+
+        free(localsum), localsum = NULL;
+        free(localsum_storage), localsum_storage = NULL;
+        free(weights), weights = NULL;
 
         if (nCluster > 1) {
             final_rep.centroids = final;
@@ -311,7 +373,6 @@ int kmeansPPinitialization(int n_data, int nCluster, double **dataset, mat &fina
     std::mt19937 eng(rd()); // seed the generator
     std::uniform_int_distribution<> distr(0, n_data); // define the range
     int first_centroid = distr(eng);
-    final.reshape(2, nCluster);
     final(0, 0) = dataset[0][first_centroid];
     final(1, 0) = dataset[1][first_centroid];
     for (int centrToSet = 1; centrToSet < nCluster; ++centrToSet) {
