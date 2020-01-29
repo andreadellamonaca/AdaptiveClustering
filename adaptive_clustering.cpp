@@ -379,9 +379,16 @@ int kmeansPPinitialization(int n_data, int nCluster, double **dataset, mat &fina
         int chosenData;
         double max_dist = -1.0;
         for (int k = 0; k < n_data; ++k) {
-            double min_dist = L2distance(final(0, 0), final(1, 0), dataset[0][k], dataset[1][k]);;
+            double min_dist = L2distance(final(0, 0), final(1, 0), dataset[0][k], dataset[1][k]);
+            if (min_dist == 0.0) {//the k-th data is already a centroid
+                continue;
+            }
             for (int centroidID = 1; centroidID < centrToSet; ++centroidID) {
                 double dist = L2distance(final(0, centroidID), final(1, centroidID), dataset[0][k], dataset[1][k]);
+                if (dist == 0.0) {//the k-th data is already a centroid
+                    min_dist = 0.0;
+                    break;
+                }
                 if (dist < min_dist) {
                     min_dist = dist;
                 }
